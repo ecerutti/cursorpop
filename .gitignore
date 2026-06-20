@@ -1,0 +1,16 @@
+# Build artifacts
+*.o
+/cursorpop
+
+# Spike binaries (source kept under spikes/ for reference)
+/spikes/spike_clickshrink
+/spikes/spike2_overlay
+
+# Python
+__pycache__/
+*.pyc
+
+# Editor / OS
+*.swp
+*~
+.DS_Store

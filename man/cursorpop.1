@@ -1,0 +1,70 @@
+.TH CURSORPOP 1 "2026" "cursorpop 0.1.0" "User Commands"
+.SH NAME
+cursorpop \- anima el cursor en X11 (achica al click, agranda al sacudir)
+.SH SYNOPSIS
+.B cursorpop
+[\fIopciones\fR]
+.SH DESCRIPTION
+.B cursorpop
+es un daemon liviano que anima el puntero del mouse en sesiones X11, imitando el
+comportamiento de macOS: el cursor se achica al apretar un botón del mouse y
+vuelve con un rebote al soltar, y se agranda momentáneamente al sacudir el mouse.
+.PP
+Funciona con cualquier forma de cursor y en cualquier entorno de escritorio
+sobre X11. Dibuja un sprite del cursor en una ventana ARGB transparente al click
+y oculta el cursor real sólo mientras dura el efecto; no usa pointer grabs, así
+que no interfiere con los clicks.
+.SH OPTIONS
+.SS Efecto de click
+.TP
+.B \-\-no\-press
+Desactiva el efecto de click.
+.TP
+.B \-\-press\-scale \fIf\fR
+Tamaño del cursor al mantener apretado (default 0.80).
+.TP
+.B \-\-press\-delay \fIms\fR
+Tiempo mínimo de apretado para disparar el efecto; los clicks más cortos
+(taps) no animan nada (default 120).
+.TP
+.B \-\-press\-duration \fIms\fR
+Duración del achique (default 100).
+.TP
+.B \-\-release\-duration \fIms\fR
+Duración del retorno con rebote (default 240).
+.TP
+.B \-\-press\-ease \fIcurva\fR
+Curva de easing del achique (default easeOut).
+.TP
+.B \-\-release\-ease \fIcurva\fR
+Curva de easing del retorno (default easeOutBack).
+.SS Efecto de sacudida
+.TP
+.B \-\-no\-wiggle
+Desactiva el efecto de sacudida.
+.TP
+.B \-\-grow\-scale \fIf\fR
+Factor máximo al agrandar (default 2.0).
+.TP
+.B \-\-grow\-duration \fIms\fR, \-\-grow\-hold \fIms\fR, \-\-grow\-shrink \fIms\fR
+Tiempos del crecimiento, la espera y el retorno.
+.TP
+.B \-\-wiggle\-window \fIms\fR, \-\-wiggle\-distance \fIpx\fR, \-\-wiggle\-flips \fIn\fR, \-\-wiggle\-velocity \fIpx/ms\fR
+Umbrales de detección de la sacudida.
+.SS General
+.TP
+.B \-\-fps \fIn\fR
+Cuadros por segundo de la animación (default 60).
+.TP
+.B \-h, \-\-help
+Muestra la ayuda.
+.TP
+.B \-v, \-\-version
+Muestra la versión.
+.SH EASING
+Presets: linear, ease, easeIn, easeOut, easeInOut, easeOutCubic, easeInCubic,
+easeOutExpo, easeOutBack, easeInOutBack; o una curva custom \fIx1,y1,x2,y2\fR.
+.SH LIMITATIONS
+Sólo X11. Requiere un compositor activo para la transparencia del overlay.
+.SH LICENSE
+MIT.

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=cursorpop
+Comment=Anima el cursor: lo achica al hacer click y lo agranda al sacudir
+Exec=cursorpop-settings --tray
+Icon=input-mouse
+Terminal=false
+Categories=Utility;
+X-GNOME-Autostart-enabled=true
