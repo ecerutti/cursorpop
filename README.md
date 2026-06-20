@@ -118,58 +118,18 @@ Para usuarios que prefieren no usar la GUI, el daemon acepta opciones al correr:
 cursorpop --press-scale 0.75 --grow-scale 2.5 --no-wiggle
 ```
 
-Y lee `~/.config/cursorpop/cursorpop.conf` al iniciar. Para ver todas las opciones:
-
-```bash
-cursorpop --help
-```
-
-<details>
-<summary>Lista completa de opciones</summary>
-
-```
-Efecto de click:
-  --no-press                 Desactiva el efecto de click
-  --press-scale <f>          Tamaño al apretar (def. 0.80)
-  --press-delay <ms>         Mínimo apretado para disparar; ignora taps (def. 120)
-  --press-duration <ms>      Duración del achique (def. 100)
-  --release-duration <ms>    Duración del retorno con rebote (def. 240)
-  --press-ease <curva>       Easing del achique (def. easeOut)
-  --release-ease <curva>     Easing del retorno (def. easeOutBack)
-
-Efecto de sacudida:
-  --no-wiggle                Desactiva el efecto de sacudida
-  --grow-scale <f>           Factor máximo al agrandar (def. 2.0)
-  --grow-duration <ms>       Duración del crecimiento (def. 250)
-  --grow-hold <ms>           Sigue grande este tiempo tras dejar de sacudir (def. 200)
-  --grow-shrink <ms>         Duración del retorno (def. 200)
-  --wiggle-window <ms>       Ventana de detección (def. 600)
-  --wiggle-distance <px>     Distancia mínima (def. 1200)
-  --wiggle-flips <n>         Cambios de dirección mínimos (def. 4)
-  --wiggle-velocity <px/ms>  Velocidad mínima (def. 2.0)
-
-General:
-  --fps <n>                  Cuadros por segundo (def. 60)
-```
-
-Curvas de easing: `linear`, `ease`, `easeIn`, `easeOut`, `easeInOut`,
-`easeOutCubic`, `easeInCubic`, `easeOutExpo`, `easeOutBack`, `easeInOutBack`,
-o una curva custom `x1,y1,x2,y2`.
-
-</details>
+Y lee `~/.config/cursorpop/cursorpop.conf` al iniciar. Ver la
+[referencia completa de CLI y configuración](docs/cli-reference.md).
 
 ---
 
-## Cómo funciona (para curiosos)
+## Para desarrolladores
 
-cursorpop tiene dos componentes:
-
-- **`cursorpop`** — un daemon liviano escrito en C que hace la animación. Corre en segundo plano, sin interfaz gráfica.
-- **`cursorpop-settings`** — la GUI escrita en Python + GTK que configura el daemon y muestra el ícono en la bandeja.
-
-El daemon escucha eventos del mouse con XInput2, captura la imagen del cursor actual con `XFixesGetCursorImage`, y dibuja una versión escalada en una ventana transparente que sigue al puntero. El cursor real se oculta solo durante el efecto. No usa *pointer grabs*, así que nunca interfiere con los clicks ni el arrastre.
-
-La idea del efecto de sacudida está inspirada en [wiggle-grow](https://github.com/dvanmh/wiggle-grow).
+| Documento | Contenido |
+|-----------|-----------|
+| [docs/architecture.md](docs/architecture.md) | Cómo funciona internamente: X11, overlay, easing, detección de sacudida |
+| [docs/cli-reference.md](docs/cli-reference.md) | Todas las opciones CLI y el formato del archivo de config |
+| [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | Cómo compilar, estructura del código, guía de estilo y cómo contribuir |
 
 ---
 
