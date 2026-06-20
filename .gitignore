@@ -1,6 +1,7 @@
 # Build artifacts
 *.o
 /cursorpop
+*.deb
 
 # Spike binaries (source kept under spikes/ for reference)
 /spikes/spike_clickshrink

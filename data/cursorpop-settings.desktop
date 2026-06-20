@@ -1,10 +1,13 @@
 [Desktop Entry]
 Type=Application
-Name=cursorpop
+Name=Configuración de Cursorpop
+Name[en]=Cursorpop Settings
 GenericName=Animación del cursor
-Comment=Configurar el efecto del cursor (achicar al click, agrandar al sacudir)
+GenericName[en]=Cursor Animation
+Comment=Configura los efectos del cursor: achicar al click y agrandar al sacudir
+Comment[en]=Configure cursor effects: shrink on click and grow on shake
 Exec=cursorpop-settings
 Icon=input-mouse
 Terminal=false
-Categories=Settings;Utility;
-Keywords=cursor;mouse;puntero;pointer;
+Categories=Settings;HardwareSettings;Utility;
+Keywords=cursor;mouse;puntero;pointer;animación;animation;ratón;

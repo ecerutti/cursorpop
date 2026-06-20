@@ -28,9 +28,24 @@ try:
 except (ValueError, ImportError):
     pass
 
-APP_ICON = "input-mouse"
-CONF_DIR = os.path.join(GLib.get_user_config_dir(), "cursorpop")
-CONF_PATH = os.path.join(CONF_DIR, "cursorpop.conf")
+APP_ICON      = "input-mouse"
+CONF_DIR      = os.path.join(GLib.get_user_config_dir(), "cursorpop")
+CONF_PATH     = os.path.join(CONF_DIR, "cursorpop.conf")
+AUTOSTART_DIR  = os.path.join(GLib.get_user_config_dir(), "autostart")
+AUTOSTART_PATH = os.path.join(AUTOSTART_DIR, "cursorpop.desktop")
+
+AUTOSTART_DESKTOP = """\
+[Desktop Entry]
+Type=Application
+Name=Cursorpop
+Comment=Efectos animados del cursor (daemon)
+Comment[en]=Animated cursor effects (daemon)
+Exec=cursorpop-settings --tray
+Icon=input-mouse
+Terminal=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+"""
 
 # Defaults: deben coincidir con src/config.c. 'enabled' es estado de la GUI
 # (si el daemon debe correr); el daemon ignora esa clave.
@@ -88,6 +103,23 @@ def save_conf(cfg):
         f.write("# cursorpop — generado por cursorpop-settings\n")
         for k in order:
             f.write(f"{k}={cfg.get(k, DEFAULTS.get(k, ''))}\n")
+
+
+# ---------------------------- autostart -------------------------------------
+def autostart_enabled():
+    return os.path.exists(AUTOSTART_PATH)
+
+
+def set_autostart(enable):
+    if enable:
+        os.makedirs(AUTOSTART_DIR, exist_ok=True)
+        with open(AUTOSTART_PATH, "w") as f:
+            f.write(AUTOSTART_DESKTOP)
+    else:
+        try:
+            os.remove(AUTOSTART_PATH)
+        except FileNotFoundError:
+            pass
 
 
 # --------------------------- control del daemon -----------------------------
@@ -218,6 +250,18 @@ class SettingsWindow(Gtk.Window):
 
         box.pack_start(Gtk.Separator(), False, False, 0)
 
+        # ---- Sección: inicio automático ----
+        box.pack_start(self._heading("Inicio automático"), False, False, 0)
+
+        self.sw_autostart = Gtk.Switch()
+        self.sw_autostart.set_active(autostart_enabled())
+        self.sw_autostart.connect("notify::active", self._on_autostart_toggled)
+        box.pack_start(
+            self._row("Iniciar con la sesión gráfica", self.sw_autostart),
+            False, False, 0)
+
+        box.pack_start(Gtk.Separator(), False, False, 0)
+
         # ---- Botones ----
         btns = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         btns.set_halign(Gtk.Align.END)
@@ -272,6 +316,9 @@ class SettingsWindow(Gtk.Window):
 
     def _on_wiggle_toggled(self, *_):
         pass
+
+    def _on_autostart_toggled(self, switch, *_):
+        set_autostart(switch.get_active())
 
     def _on_apply(self, *_):
         self.cfg["press_enabled"] = "1" if self.sw_press.get_active() else "0"
@@ -332,8 +379,15 @@ class CursorpopApp:
 
     def on_window_closed(self):
         self.window = None
-        if not self.tray_mode:
-            Gtk.main_quit()
+        if self.tray_mode:
+            return
+        # Transición a tray: el app queda corriendo como ícono en la bandeja.
+        self.tray_mode = True
+        cfg = load_conf()
+        if cfg.get("enabled", "1") == "1" and not daemon_pid():
+            start_daemon()
+        self._build_tray()
+        self._refresh_tray()
 
     def quit(self, *_):
         Gtk.main_quit()
