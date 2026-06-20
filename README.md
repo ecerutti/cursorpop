@@ -1,125 +1,131 @@
 # cursorpop
 
-Anima el puntero del mouse en Linux/X11, imitando el comportamiento de macOS:
+Dos pequeños efectos visuales para el cursor del mouse en Linux, inspirados en macOS:
 
-- 🖱️ **Click → achica:** al apretar un botón del mouse, el cursor se encoge; al
-  soltar vuelve a su tamaño con un pequeño rebote.
-- 🫨 **Sacudida → agranda:** al mover el mouse rápido de un lado a otro, el cursor
-  crece momentáneamente para que lo encuentres (estilo "shake to locate").
+- **Al hacer click**, el cursor se achica un instante y vuelve con un pequeño rebote.
+- **Al sacudir el mouse** rápido de un lado a otro, el cursor crece temporalmente para que lo encuentres en pantalla.
 
-Funciona con **cualquier cursor** (flecha, manito de links, cursor de texto, etc.)
-y en **cualquier entorno de escritorio sobre X11**: Cinnamon, GNOME, KDE Plasma,
-Xfce, MATE, i3 y demás.
+Funciona en cualquier escritorio sobre X11: Cinnamon, GNOME, KDE, XFCE, MATE y otros.
 
-Incluye una **GUI de configuración** (ícono en la bandeja del sistema + ventana
-de ajustes), además de la configuración por línea de comandos.
+> v0.1.0 — Probado en Linux Mint Debian Edition (Cinnamon).
 
-> Estado: v0.1.0 — funcional. Probado en Linux Mint Debian Edition (Cinnamon).
+---
 
-## Arquitectura
+## Instalación
 
-Son dos programas que viven en este mismo repo:
+### Opción 1 — Paquete Debian (más fácil)
 
-- **`cursorpop`** — el daemon (C). Hace la animación. Liviano y sin dependencias
-  de GUI; corre en segundo plano. Lee `~/.config/cursorpop/cursorpop.conf` y los
-  flags CLI (los flags tienen prioridad), y recarga la config con `SIGHUP`.
-- **`cursorpop-settings`** — la GUI (Python + GTK). Sólo edita el archivo de
-  config y controla el daemon (lo arranca/detiene y le manda `SIGHUP`). No corre
-  de forma residente más allá del ícono de bandeja.
+Descargá el archivo `.deb` desde la [página de releases](https://github.com/ecerutti/cursorpop/releases) e instalalo con doble click, o desde la terminal:
 
-## Cómo funciona
+```bash
+sudo dpkg -i cursorpop_0.1.0_amd64.deb
+```
 
-X11 no permite animar el cursor de hardware sin, o bien hacer un *pointer grab*
-(que robaría los clicks), o bien que el servidor no re-renderice el cambio. Para
-evitar ambos problemas, cursorpop:
+Si faltara alguna dependencia, ejecutá después:
 
-1. Escucha los eventos del mouse con **XInput2** (sin interceptarlos, así los
-   clicks siguen funcionando normalmente).
-2. Cuando empieza un efecto, **captura los píxeles del cursor actual** con
-   `XFixesGetCursorImage` (por eso funciona con cualquier forma de cursor).
-3. Dibuja un sprite escalado en una **ventana ARGB override-redirect transparente
-   al click** que sigue al puntero, y **oculta el cursor real sólo mientras dura
-   el efecto** (`XFixesHideCursor`).
-4. Anima la escala con curvas **cubic-bézier** (easing configurable).
+```bash
+sudo apt install -f
+```
 
-No usa pointer grabs, así que nunca interfiere con los clicks ni el arrastre.
+### Opción 2 — Compilar desde el código fuente
 
-La idea del efecto de sacudida está inspirada en
-[wiggle-grow](https://github.com/dvanmh/wiggle-grow).
-
-## Dependencias
-
-Bibliotecas de desarrollo de X11:
+**1. Instalá las dependencias:**
 
 ```bash
 # Debian / Ubuntu / Linux Mint / LMDE
-sudo apt install build-essential libx11-dev libxfixes-dev libxi-dev libxext-dev
-
-# Fedora
-sudo dnf install gcc make libX11-devel libXfixes-devel libXi-devel libXext-devel
-
-# Arch
-sudo pacman -S base-devel libx11 libxfixes libxi libxext
+sudo apt install build-essential libx11-dev libxfixes-dev libxi-dev libxext-dev \
+                 python3-gi gir1.2-gtk-3.0 gir1.2-xapp-1.0
 ```
 
-Para la **GUI** (opcional) hacen falta Python 3 + GTK (en Linux Mint ya vienen):
-
-```bash
-# Debian / Ubuntu / Mint / LMDE
-sudo apt install python3-gi gir1.2-gtk-3.0
-# Ícono de bandeja nativo en Mint (recomendado; si no, usa Gtk.StatusIcon):
-sudo apt install gir1.2-xapp-1.0
-```
-
-Requiere un **compositor activo** (para el visual ARGB de 32 bits). La mayoría de
-los escritorios modernos lo tienen por defecto.
-
-## Compilar e instalar
+**2. Compilá e instalá:**
 
 ```bash
 make
-sudo make install      # instala en /usr/local/bin (PREFIX configurable)
+sudo make install
 ```
 
-O simplemente ejecutar el binario sin instalar: `./cursorpop`
-
-## Uso
+**3. (Opcional) Para generar un paquete `.deb` vos mismo:**
 
 ```bash
-cursorpop            # corre en primer plano; Ctrl-C para salir
-cursorpop &          # en segundo plano
-cursorpop --help     # todas las opciones
+make deb
+sudo dpkg -i cursorpop_0.1.0_amd64.deb
 ```
 
-### Configuración con interfaz gráfica
+---
+
+## Primeros pasos
+
+Después de instalar, abrí **Configuración de Cursorpop** desde el menú de tu escritorio (está en Preferencias o Accesorios).
+
+Se abre una ventana donde podés:
+
+- Activar o desactivar cada efecto por separado.
+- Ajustar cuánto se achica el cursor al hacer click y cuánto crece al sacudir.
+- **Activar el inicio automático** con la sesión gráfica — solo marcá el tilde "Iniciar con la sesión gráfica" y listo.
+
+Al hacer click en **Aplicar**, los cambios se aplican de inmediato. Al cerrar la ventana, cursorpop queda corriendo en la bandeja del sistema (el ícono del mouse en la esquina del panel).
+
+### Bandeja del sistema
+
+Desde el ícono de la bandeja podés:
+
+- Activar o desactivar cursorpop con un solo click.
+- Abrir la ventana de configuración.
+- Cerrar la aplicación completamente.
+
+---
+
+## Desinstalar
+
+Si instalaste con el paquete `.deb`:
 
 ```bash
-cursorpop-settings           # abre la ventana de configuración
-cursorpop-settings --tray    # corre en la bandeja del sistema
+sudo apt remove cursorpop
 ```
 
-Desde la ventana podés elegir, entre otras cosas, si el cursor se achica en
-**todos los clicks** o **solo al mantener apretado** (con el tiempo
-configurable), el tamaño del achique y del agrandado, y la sensibilidad de la
-sacudida. Al **Aplicar**, escribe el archivo de config y le avisa al daemon.
-
-El ícono de la bandeja tiene un toggle para activar/desactivar y un acceso a la
-configuración.
-
-> En desarrollo (sin instalar), corré la GUI con:
-> `python3 gui/cursorpop-settings.py` — encuentra el binario `./cursorpop`.
-
-### Arranque automático
-
-Para que se inicie con tu sesión (lanza el ícono de bandeja, que a su vez
-arranca el daemon si está activado):
+Si instalaste con `make install`:
 
 ```bash
-mkdir -p ~/.config/autostart
-cp data/cursorpop.desktop ~/.config/autostart/
+sudo make uninstall
 ```
 
-## Opciones
+---
+
+## Preguntas frecuentes
+
+**¿Funciona con Wayland?**
+No. Wayland no permite este tipo de efecto global sobre el cursor. Funciona solo en sesiones X11.
+
+**¿El cursor se ve borroso al agrandarse?**
+Con factores de escala muy grandes (más de 2×) puede verse algo borroso, ya que la imagen del cursor se escala por software. Con el valor por defecto (2×) se ve bien.
+
+**¿Necesita algún compositor especial?**
+Necesita que haya un compositor activo para la transparencia del efecto. La mayoría de los escritorios modernos lo tienen por defecto (en Cinnamon, GNOME, KDE y XFCE ya viene activado).
+
+**La GUI no aparece en el menú después de instalar**
+Probá cerrar sesión y volver a entrar, o ejecutar en la terminal:
+```bash
+update-desktop-database ~/.local/share/applications
+```
+
+---
+
+## Configuración avanzada (línea de comandos)
+
+Para usuarios que prefieren no usar la GUI, el daemon acepta opciones al correr:
+
+```bash
+cursorpop --press-scale 0.75 --grow-scale 2.5 --no-wiggle
+```
+
+Y lee `~/.config/cursorpop/cursorpop.conf` al iniciar. Para ver todas las opciones:
+
+```bash
+cursorpop --help
+```
+
+<details>
+<summary>Lista completa de opciones</summary>
 
 ```
 Efecto de click:
@@ -146,16 +152,26 @@ General:
   --fps <n>                  Cuadros por segundo (def. 60)
 ```
 
-Curvas de easing disponibles: `linear`, `ease`, `easeIn`, `easeOut`,
-`easeInOut`, `easeOutCubic`, `easeInCubic`, `easeOutExpo`, `easeOutBack`,
-`easeInOutBack`, o una curva custom `x1,y1,x2,y2`.
+Curvas de easing: `linear`, `ease`, `easeIn`, `easeOut`, `easeInOut`,
+`easeOutCubic`, `easeInCubic`, `easeOutExpo`, `easeOutBack`, `easeInOutBack`,
+o una curva custom `x1,y1,x2,y2`.
 
-## Limitaciones conocidas
+</details>
 
-- **Sólo X11.** Wayland no permite este tipo de manipulación global del cursor.
-- Al **agrandar** cursores chicos, la imagen se escala por software (bilineal),
-  así que puede verse algo borrosa con factores grandes.
-- Requiere compositor para la transparencia del overlay.
+---
+
+## Cómo funciona (para curiosos)
+
+cursorpop tiene dos componentes:
+
+- **`cursorpop`** — un daemon liviano escrito en C que hace la animación. Corre en segundo plano, sin interfaz gráfica.
+- **`cursorpop-settings`** — la GUI escrita en Python + GTK que configura el daemon y muestra el ícono en la bandeja.
+
+El daemon escucha eventos del mouse con XInput2, captura la imagen del cursor actual con `XFixesGetCursorImage`, y dibuja una versión escalada en una ventana transparente que sigue al puntero. El cursor real se oculta solo durante el efecto. No usa *pointer grabs*, así que nunca interfiere con los clicks ni el arrastre.
+
+La idea del efecto de sacudida está inspirada en [wiggle-grow](https://github.com/dvanmh/wiggle-grow).
+
+---
 
 ## Licencia
 
