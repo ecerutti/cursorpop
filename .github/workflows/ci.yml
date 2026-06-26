@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential gettext \
+            libx11-dev libxfixes-dev libxi-dev libxext-dev \
+            python3-gi gir1.2-gtk-3.0 \
+            desktop-file-utils
+
+      - name: Build daemon
+        run: make
+
+      - name: Compile translations
+        run: make mo
+
+      - name: Check GUI syntax
+        run: python3 -m py_compile gui/cursorpop-settings.py
+
+      - name: Validate desktop files
+        run: desktop-file-validate data/*.desktop
+
+      - name: Build Debian package
+        run: make deb

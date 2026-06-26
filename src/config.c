@@ -1,4 +1,4 @@
-/* config.c — Defaults y parseo de línea de comandos. */
+/* config.c — Defaults and command-line parsing. */
 #include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,22 +7,22 @@
 #include <getopt.h>
 
 #ifndef CURSORPOP_VERSION
-#define CURSORPOP_VERSION "0.1.0"
+#define CURSORPOP_VERSION "0.3.0"
 #endif
 
 void config_defaults(Config *c) {
     c->press_enabled       = 1;
     c->press_scale         = 0.80;
-    c->press_delay_ms      = 120;   /* clicks más cortos que esto no animan nada */
+    c->press_delay_ms      = 120;   /* clicks shorter than this animate nothing */
     c->press_duration_ms   = 100;
     c->release_duration_ms = 240;
     easing_parse("easeOut",     &c->press_ease);
-    easing_parse("easeOutBack", &c->release_ease);   /* rebote al soltar */
+    easing_parse("easeOutBack", &c->release_ease);   /* bounce on release */
 
     c->wiggle_enabled      = 1;
     c->grow_scale          = 2.0;
     c->grow_duration_ms    = 250;
-    c->grow_hold_ms        = 200;   /* sigue grande este tiempo tras parar de sacudir */
+    c->grow_hold_ms        = 200;   /* stays big this long after the shake stops */
     c->grow_shrink_ms      = 200;
     easing_parse("easeOut",    &c->grow_ease);
     easing_parse("easeInOut",  &c->grow_shrink_ease);
@@ -37,33 +37,33 @@ void config_defaults(Config *c) {
 
 static void usage(const char *prog) {
     printf(
-"cursorpop — anima el cursor en X11: lo achica al hacer click (estilo Mac)\n"
-"            y lo agranda al sacudir el mouse.\n\n"
-"Uso: %s [opciones]\n\n"
-"Efecto de click:\n"
-"  --no-press                 Desactiva el efecto de click\n"
-"  --press-scale <f>          Tamaño al apretar (def. 0.80)\n"
-"  --press-delay <ms>         Mínimo apretado para disparar; ignora taps (def. 120)\n"
-"  --press-duration <ms>      Duración del achique (def. 100)\n"
-"  --release-duration <ms>    Duración del retorno con rebote (def. 240)\n"
-"  --press-ease <curva>       Easing del achique (def. easeOut)\n"
-"  --release-ease <curva>     Easing del retorno (def. easeOutBack)\n\n"
-"Efecto de sacudida (agrandar):\n"
-"  --no-wiggle                Desactiva el efecto de sacudida\n"
-"  --grow-scale <f>           Factor máximo al agrandar (def. 2.0)\n"
-"  --grow-duration <ms>       Duración del crecimiento (def. 250)\n"
-"  --grow-hold <ms>           Sigue grande este tiempo tras dejar de sacudir (def. 200)\n"
-"  --grow-shrink <ms>         Duración del retorno (def. 200)\n"
-"  --wiggle-window <ms>       Ventana de detección (def. 600)\n"
-"  --wiggle-distance <px>     Distancia mínima (def. 1200)\n"
-"  --wiggle-flips <n>         Cambios de dirección mínimos (def. 4)\n"
-"  --wiggle-velocity <px/ms>  Velocidad mínima (def. 2.0)\n\n"
+"cursorpop — animates the X11 cursor: shrinks it on click (Mac style)\n"
+"            and grows it when you shake the mouse.\n\n"
+"Usage: %s [options]\n\n"
+"Click effect:\n"
+"  --no-press                 Disable the click effect\n"
+"  --press-scale <f>          Size while pressed (default 0.80)\n"
+"  --press-delay <ms>         Min hold time to trigger; ignores taps (default 120)\n"
+"  --press-duration <ms>      Shrink duration (default 100)\n"
+"  --release-duration <ms>    Return-with-bounce duration (default 240)\n"
+"  --press-ease <curve>       Shrink easing (default easeOut)\n"
+"  --release-ease <curve>     Return easing (default easeOutBack)\n\n"
+"Shake effect (grow):\n"
+"  --no-wiggle                Disable the shake effect\n"
+"  --grow-scale <f>           Max grow factor (default 2.0)\n"
+"  --grow-duration <ms>       Grow duration (default 250)\n"
+"  --grow-hold <ms>           Stay big this long after the shake stops (default 200)\n"
+"  --grow-shrink <ms>         Return duration (default 200)\n"
+"  --wiggle-window <ms>       Detection window (default 600)\n"
+"  --wiggle-distance <px>     Minimum distance (default 1200)\n"
+"  --wiggle-flips <n>         Minimum direction changes (default 4)\n"
+"  --wiggle-velocity <px/ms>  Minimum velocity (default 2.0)\n\n"
 "General:\n"
-"  --fps <n>                  Cuadros por segundo (def. 60)\n"
-"  -h, --help                 Esta ayuda\n"
-"  -v, --version              Versión\n\n"
-"Curvas de easing: linear, ease, easeIn, easeOut, easeInOut, easeOutCubic,\n"
-"  easeInCubic, easeOutExpo, easeOutBack, easeInOutBack, o custom x1,y1,x2,y2\n",
+"  --fps <n>                  Frames per second (default 60)\n"
+"  -h, --help                 This help\n"
+"  -v, --version              Version\n\n"
+"Easing curves: linear, ease, easeIn, easeOut, easeInOut, easeOutCubic,\n"
+"  easeInCubic, easeOutExpo, easeOutBack, easeInOutBack, or custom x1,y1,x2,y2\n",
         prog);
 }
 
@@ -111,12 +111,12 @@ int config_parse(Config *c, int argc, char **argv) {
         case OPT_REL_DUR:     c->release_duration_ms = atoi(optarg); break;
         case OPT_PRESS_EASE:
             if (easing_parse(optarg, &c->press_ease)) {
-                fprintf(stderr, "Easing inválido: %s\n", optarg); return -1;
+                fprintf(stderr, "Invalid easing: %s\n", optarg); return -1;
             }
             break;
         case OPT_REL_EASE:
             if (easing_parse(optarg, &c->release_ease)) {
-                fprintf(stderr, "Easing inválido: %s\n", optarg); return -1;
+                fprintf(stderr, "Invalid easing: %s\n", optarg); return -1;
             }
             break;
         case OPT_NO_WIGGLE:   c->wiggle_enabled = 0; break;

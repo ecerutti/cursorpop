@@ -1,4 +1,4 @@
-/* overlay.c — Implementación de la ventana overlay ARGB click-through. */
+/* overlay.c — Implementation of the click-through ARGB overlay window. */
 #include "overlay.h"
 #include <X11/Xutil.h>
 #include <X11/extensions/shape.h>
@@ -29,11 +29,11 @@ int overlay_init(Overlay *o, Display *dpy) {
         CWColormap | CWBackPixel | CWBorderPixel | CWOverrideRedirect, &attrs);
     if (!o->win) return -1;
 
-    /* No queremos que el WM la administre */
+    /* We don't want the WM to manage it */
     XClassHint ch = { (char *)"cursorpop", (char *)"cursorpop" };
     XSetClassHint(dpy, o->win, &ch);
 
-    /* Transparente al click: región de input vacía */
+    /* Click-through: empty input region */
     XShapeCombineRectangles(dpy, o->win, ShapeInput, 0, 0, NULL, 0,
                             ShapeSet, Unsorted);
 
@@ -67,8 +67,8 @@ void overlay_show(Overlay *o, const uint32_t *argb, int w, int h,
         XRaiseWindow(o->dpy, o->win);
     }
 
-    /* XCreateImage envuelve el buffer sin copiarlo; ponemos data=NULL antes de
-     * XDestroyImage para no liberar memoria que pertenece al llamador. */
+    /* XCreateImage wraps the buffer without copying it; we set data=NULL before
+     * XDestroyImage so we don't free memory that belongs to the caller. */
     XImage *img = XCreateImage(o->dpy, o->visual, 32, ZPixmap, 0,
                                (char *)argb, w, h, 32, 0);
     if (img) {
@@ -78,9 +78,9 @@ void overlay_show(Overlay *o, const uint32_t *argb, int w, int h,
         XDestroyImage(img);
     }
 
-    /* Ocultar el cursor real DESPUÉS de dibujar evita un parpadeo en el que no
-     * se vería nada; el solapamiento breve (cursor real + sprite a escala ~1)
-     * es invisible porque coinciden. */
+    /* Hiding the real cursor AFTER drawing avoids a flicker where nothing would
+     * be shown; the brief overlap (real cursor + sprite at scale ~1) is
+     * invisible because they coincide. */
     if (!o->cursor_hidden) {
         XFixesHideCursor(o->dpy, o->root);
         o->cursor_hidden = 1;
@@ -89,7 +89,7 @@ void overlay_show(Overlay *o, const uint32_t *argb, int w, int h,
 }
 
 void overlay_hide(Overlay *o) {
-    /* Mostrar el cursor real ANTES de desmapear, por el mismo motivo. */
+    /* Show the real cursor BEFORE unmapping, for the same reason. */
     if (o->cursor_hidden) {
         XFixesShowCursor(o->dpy, o->root);
         o->cursor_hidden = 0;

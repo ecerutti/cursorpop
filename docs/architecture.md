@@ -1,82 +1,83 @@
-# Arquitectura de cursorpop
+# CursorPop architecture
 
-## Componentes
+## Components
 
-cursorpop está dividido en dos programas independientes que viven en el mismo repositorio:
+cursorpop is split into two independent programs that live in the same repository:
 
-### `cursorpop` — el daemon (C)
+### `cursorpop` — the daemon (C)
 
-Hace la animación. Corre en segundo plano sin interfaz gráfica. Lee
-`~/.config/cursorpop/cursorpop.conf` al iniciar y recarga la config con `SIGHUP`.
-Los flags de CLI tienen prioridad sobre el archivo de config.
+It does the animation. It runs in the background with no graphical interface. It reads
+`~/.config/cursorpop/cursorpop.conf` at startup and reloads the config on `SIGHUP`.
+CLI flags take precedence over the config file.
 
-| Archivo           | Responsabilidad                                           |
-|-------------------|-----------------------------------------------------------|
-| `src/cursorpop.c` | `main`, loop de eventos, máquina de estados de animación  |
-| `src/overlay.c`   | Ventana ARGB override-redirect transparente al click      |
-| `src/capture.c`   | Captura del cursor (XFixes) y escalado bilineal           |
-| `src/wiggle.c`    | Detección de sacudida                                     |
-| `src/easing.c`    | Curvas cubic-bézier y presets                             |
-| `src/config.c`    | Defaults, parseo de CLI y lectura del archivo de config   |
+| File              | Responsibility                                           |
+|-------------------|----------------------------------------------------------|
+| `src/cursorpop.c` | `main`, event loop, animation state machine              |
+| `src/overlay.c`   | ARGB override-redirect, click-through window             |
+| `src/capture.c`   | Cursor capture (XFixes) and bilinear scaling             |
+| `src/wiggle.c`    | Shake detection                                          |
+| `src/easing.c`    | Cubic-bézier curves and presets                          |
+| `src/config.c`    | Defaults, CLI parsing and config-file reading            |
 
-Los `spikes/` son experimentos de validación de la arquitectura; no forman parte del binario.
+The `spikes/` are architecture-validation experiments; they are not part of the binary.
 
-### `cursorpop-settings` — la GUI (Python + GTK)
+### `cursorpop-settings` — the GUI (Python + GTK)
 
-Solo edita `~/.config/cursorpop/cursorpop.conf` y controla el daemon (lo arranca,
-detiene y le manda `SIGHUP` para recargar). No tiene lógica de animación.
+It only edits `~/.config/cursorpop/cursorpop.conf` and controls the daemon (starts it,
+stops it, and sends `SIGHUP` to reload). It contains no animation logic.
 
-Escrito en Python 3 + GTK 3. Soporta `XApp.StatusIcon` (bandeja nativa de
-Cinnamon/Mint) con fallback a `Gtk.StatusIcon`.
+Written in Python 3 + GTK 3. It supports `XApp.StatusIcon` (Cinnamon/Mint native tray)
+with a fallback to `Gtk.StatusIcon`. Its strings are localized with `gettext` (see
+[Internationalization](#internationalization)).
 
-## Cómo funciona la animación
+## How the animation works
 
-X11 no permite animar el cursor de hardware directamente sin hacer un *pointer
-grab* (que robaría los clicks) o depender de extensiones no universales. cursorpop
-resuelve esto así:
+X11 does not allow animating the hardware cursor directly without doing a *pointer
+grab* (which would steal clicks) or relying on non-universal extensions. cursorpop
+solves this as follows:
 
-1. **Escucha eventos sin interceptarlos.** Usa XInput2 (`XISelectEvents`) para
-   recibir eventos de botón y movimiento del mouse. Los eventos siguen propagándose
-   normalmente; los clicks funcionan igual.
+1. **Listen to events without intercepting them.** It uses XInput2 (`XISelectEvents`)
+   to receive mouse button and motion events. The events keep propagating normally;
+   clicks work just the same.
 
-2. **Captura la imagen del cursor actual.** Cuando empieza un efecto, llama a
-   `XFixesGetCursorImage` para obtener los píxeles exactos del cursor en ese
-   momento. Por eso funciona con cualquier forma: flecha, manito, cursor de texto, etc.
+2. **Capture the current cursor image.** When an effect starts, it calls
+   `XFixesGetCursorImage` to get the exact pixels of the cursor at that moment. That
+   is why it works with any shape: arrow, hand, text caret, etc.
 
-3. **Dibuja un sprite escalado en una ventana overlay.** Crea una ventana ARGB de
-   32 bits con `override-redirect` y `WM_CLASS` que la hace transparente a los
-   clicks (mediante `XShapeCombineRectangles` con `ShapeInput` vacío). Esta ventana
-   sigue al puntero con `XMoveWindow` en cada frame.
+3. **Draw a scaled sprite in an overlay window.** It creates a 32-bit ARGB window with
+   `override-redirect` and a `WM_CLASS`, made click-through (via
+   `XShapeCombineRectangles` with an empty `ShapeInput`). This window follows the
+   pointer with `XMoveWindow` on every frame.
 
-4. **Oculta el cursor real solo durante el efecto.** Usa `XFixesHideCursor` /
-   `XFixesShowCursor` para evitar que se vea el cursor original debajo del sprite.
-   Se restaura inmediatamente al terminar la animación.
+4. **Hide the real cursor only during the effect.** It uses `XFixesHideCursor` /
+   `XFixesShowCursor` to keep the original cursor from showing under the sprite. It is
+   restored immediately when the animation ends.
 
-5. **Anima la escala con curvas de easing.** Cada frame calcula el factor de
-   escala según la curva configurada, escala la imagen capturada por software
-   (interpolación bilineal en `src/capture.c`) y la dibuja con `XPutImage`.
+5. **Animate the scale with easing curves.** Each frame computes the scale factor
+   according to the configured curve, scales the captured image in software (bilinear
+   interpolation in `src/capture.c`) and draws it with `XPutImage`.
 
-## Detección de sacudida
+## Shake detection
 
-`src/wiggle.c` mantiene un historial circular de posiciones recientes. En cada
-evento de movimiento acumula la distancia recorrida y cuenta los cambios de
-dirección horizontal dentro de una ventana de tiempo (`wiggle_window`). El efecto
-se dispara cuando se cumplen simultáneamente tres condiciones:
+`src/wiggle.c` keeps a circular history of recent positions. On every motion event it
+accumulates the travelled distance and counts the horizontal direction changes within
+a time window (`wiggle_window`). The effect fires when three conditions are met at the
+same time:
 
-- Distancia total ≥ `wiggle_distance`
-- Cambios de dirección ≥ `wiggle_flips`
-- Velocidad media ≥ `wiggle_velocity`
+- Total distance ≥ `wiggle_distance`
+- Direction changes ≥ `wiggle_flips`
+- Average velocity ≥ `wiggle_velocity`
 
-## Curvas de easing
+## Easing curves
 
-`src/easing.c` implementa easing mediante cubic-bézier parametrizado, igual que
-CSS `cubic-bezier()`. Los presets (`easeOut`, `easeOutBack`, etc.) son alias de
-curvas estándar. También se puede pasar una curva custom como `x1,y1,x2,y2`.
+`src/easing.c` implements easing with parametric cubic-bézier curves, just like CSS
+`cubic-bezier()`. The presets (`easeOut`, `easeOutBack`, etc.) are aliases for standard
+curves. You can also pass a custom curve as `x1,y1,x2,y2`.
 
-La evaluación usa bisección numérica para invertir el polinomio de Bernstein, con
-tolerancia de `1e-5` en ~8 iteraciones.
+The evaluation uses numerical bisection to invert the Bernstein polynomial, with a
+tolerance of `1e-6` over ~8 iterations.
 
-## Diagrama de estados (efecto de click)
+## State diagram (click effect)
 
 ```
 IDLE ──press──► SHRINKING ──timeout──► HOLDING
@@ -87,12 +88,21 @@ IDLE ──press──► SHRINKING ──timeout──► HOLDING
                                       RELEASING ──done──► IDLE
 ```
 
-## Archivo de configuración
+## Config file
 
-Ubicación: `~/.config/cursorpop/cursorpop.conf`
+Location: `~/.config/cursorpop/cursorpop.conf`
 
-Formato: `clave=valor`, una por línea. Líneas que empiezan con `#` o `;` son
-comentarios. La GUI regenera el archivo completo al aplicar cambios.
+Format: `key=value`, one per line. Lines starting with `#` or `;` are comments. The GUI
+rewrites the whole file when applying changes.
 
-La clave `enabled` es propia de la GUI (indica si debe arrancar el daemon al
-iniciar). El daemon la ignora.
+The `enabled` key is GUI-only (it indicates whether the daemon should start at launch).
+The daemon ignores it.
+
+## Internationalization
+
+The GUI strings live in English in the source and are wrapped with `gettext` (`_()`).
+Translations are kept under `po/` (`po/cursorpop.pot` template, `po/<lang>.po` per
+language) and compiled to `locale/<lang>/LC_MESSAGES/cursorpop.mo` by `make mo`, then
+installed under `$(PREFIX)/share/locale`. At startup the GUI selects the system
+language and falls back to English when no translation exists. The C daemon is not
+localized: its `--help` and error messages are English only.

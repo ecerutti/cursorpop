@@ -1,4 +1,4 @@
-/* wiggle.c — Detección de sacudida: distancia + cambios de dirección + velocidad. */
+/* wiggle.c — Shake detection: distance + direction changes + velocity. */
 #include "wiggle.h"
 #include <math.h>
 #include <string.h>
@@ -17,13 +17,13 @@ void wiggle_reset(Wiggle *w) {
 }
 
 int wiggle_feed(Wiggle *w, long t_ms, double x, double y) {
-    /* Guardar la muestra en el buffer circular */
+    /* Store the sample in the circular buffer */
     w->buf[w->head] = (WSample){ t_ms, x, y };
     w->head = (w->head + 1) % WIGGLE_MAX;
     if (w->count < WIGGLE_MAX) w->count++;
 
-    /* Recorrer las muestras dentro de la ventana temporal, de la más vieja a
-     * la más nueva, calculando distancia, cambios de dirección y velocidad. */
+    /* Walk the samples within the time window, oldest to newest, accumulating
+     * distance, direction changes and velocity. */
     long cutoff = t_ms - w->window_ms;
     double distance = 0.0;
     int flips = 0;
@@ -46,8 +46,8 @@ int wiggle_feed(Wiggle *w, long t_ms, double x, double y) {
             double dy = s->y - prev_y;
             distance += hypot(dx, dy);
 
-            /* Cambios de dirección en el eje X (las sacudidas suelen ser
-             * horizontales). Ignoramos micro-movimientos para evitar ruido. */
+            /* Direction changes on the X axis (shakes are usually horizontal).
+             * Ignore micro-movements to avoid noise. */
             if (fabs(dx) > 1.0) {
                 int sign = (dx > 0) ? 1 : -1;
                 if (last_sign != 0 && sign != last_sign) flips++;

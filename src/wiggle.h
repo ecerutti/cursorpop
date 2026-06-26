@@ -1,4 +1,4 @@
-/* wiggle.h — Detector de sacudida del mouse (estilo "shake to locate"). */
+/* wiggle.h — Mouse shake detector ("shake to locate" style). */
 #ifndef CURSORPOP_WIGGLE_H
 #define CURSORPOP_WIGGLE_H
 
@@ -14,14 +14,14 @@ typedef struct {
     int    min_flips;
     double min_velocity;
     WSample buf[WIGGLE_MAX];
-    int    head;   /* índice de la próxima escritura */
+    int    head;   /* index of the next write */
     int    count;
 } Wiggle;
 
 void wiggle_init(Wiggle *w, const Config *c);
 
-/* Alimenta una muestra de movimiento (t en ms, posición x,y).
- * Devuelve 1 si se detecta una sacudida en este instante. */
+/* Feed a motion sample (t in ms, position x,y).
+ * Returns 1 if a shake is detected at this moment. */
 int  wiggle_feed(Wiggle *w, long t_ms, double x, double y);
 
 void wiggle_reset(Wiggle *w);

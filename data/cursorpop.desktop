@@ -1,11 +1,10 @@
 [Desktop Entry]
 Type=Application
-Name=Cursorpop
-Comment=Efectos animados del cursor (daemon)
-Comment[en]=Animated cursor effects (daemon)
+Name=CursorPop
+Comment=Animated cursor effects (daemon)
+Comment[es]=Efectos animados del cursor (daemon)
 Exec=cursorpop-settings --tray
-Icon=input-mouse
+Icon=cursorpop
 Terminal=false
-Categories=
 NoDisplay=true
 X-GNOME-Autostart-enabled=true

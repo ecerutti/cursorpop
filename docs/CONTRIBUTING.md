@@ -1,103 +1,132 @@
-# Contribuir a cursorpop
+# Contributing to CursorPop
 
-¡Gracias por tu interés! cursorpop es un proyecto chico: un daemon en C para X11
-y una GUI en Python + GTK. El código es simple y está dividido en módulos con
-responsabilidades claras, así que es fácil entrar.
+Thanks for your interest! cursorpop is a small project: a C daemon for X11 and a
+Python + GTK GUI. The code is simple and split into modules with clear
+responsibilities, so it is easy to get into.
 
-## Entorno de desarrollo
+## Development environment
 
-### Dependencias para compilar
+### Build dependencies
 
 ```bash
 # Debian / Ubuntu / Linux Mint / LMDE
-sudo apt install build-essential libx11-dev libxfixes-dev libxi-dev libxext-dev \
+sudo apt install build-essential gettext libx11-dev libxfixes-dev libxi-dev libxext-dev \
                  python3-gi gir1.2-gtk-3.0 gir1.2-xapp-1.0
 ```
 
-### Compilar
+`gettext` provides `msgfmt`/`xgettext`, used to compile and extract the GUI
+translations. If it is missing, `make` still builds the daemon and skips the
+translations (the GUI then falls back to English).
+
+### Build
 
 ```bash
-make            # binario en ./cursorpop
-make clean      # elimina objetos y binario
+make            # daemon in ./cursorpop, translations in ./locale
+make clean      # remove objects, binary and locale
 ```
 
-Para desarrollo, compilá con sanitizers para detectar bugs de memoria:
+For development, build with sanitizers to catch memory bugs:
 
 ```bash
 make CFLAGS="-O0 -g -std=c11 -Wall -Wextra -fsanitize=address,undefined -D_GNU_SOURCE"
 ```
 
-### Probar la GUI sin instalar
+### Run the GUI without installing
 
 ```bash
 python3 gui/cursorpop-settings.py
 ```
 
-La GUI encuentra el binario `./cursorpop` automáticamente si no está instalado en
-el `PATH`.
+The GUI finds the `./cursorpop` binary automatically if it is not on the `PATH`, and
+finds the compiled translations under `./locale` (run `make mo` first to see the GUI in
+another language while developing).
 
-## Estructura del código
+## Code structure
 
 ```
-src/            Daemon en C
-  cursorpop.c   main, loop de eventos, máquina de estados de animación
-  overlay.c     Ventana ARGB override-redirect transparente al click
-  capture.c     Captura del cursor (XFixes) y escalado bilineal
-  wiggle.c      Detección de sacudida
-  easing.c      Curvas cubic-bézier y presets
-  config.c      Defaults, parseo de CLI y lectura del archivo de config
+src/            C daemon
+  cursorpop.c   main, event loop, animation state machine
+  overlay.c     ARGB override-redirect, click-through window
+  capture.c     Cursor capture (XFixes) and bilinear scaling
+  wiggle.c      Shake detection
+  easing.c      Cubic-bézier curves and presets
+  config.c      Defaults, CLI parsing and config-file reading
 
-gui/            GUI en Python + GTK
+gui/            Python + GTK GUI
   cursorpop-settings.py
 
-data/           Archivos de escritorio
-  cursorpop-settings.desktop   Entrada en menús del sistema (Preferencias)
-  cursorpop.desktop             Entrada de autostart (~/.config/autostart/)
+po/             Translations (gettext)
+  cursorpop.pot   String template (regenerate with `make pot`)
+  es.po           Spanish translation
 
-packaging/      Archivos para generar el paquete Debian
+data/           Desktop files
+  cursorpop-settings.desktop   System menu entry (Preferences)
+  cursorpop.desktop             Autostart entry (~/.config/autostart/)
+
+packaging/      Files to build the Debian package
   debian/
-    control     Metadatos del paquete (versión y arch se sustituyen con sed)
-    postinst    Script post-instalación
-    prerm       Script pre-desinstalación
+    control     Package metadata (version and arch substituted with sed)
+    postinst    Post-install script
+    prerm       Pre-removal script
+    postrm      Post-removal script
 
-man/            Página de manual
+man/            Manual page
   cursorpop.1
 
-spikes/         Experimentos de validación de arquitectura (no van al binario)
+spikes/         Architecture-validation experiments (not part of the binary)
 ```
 
-Para una descripción técnica detallada de cómo funciona la animación, ver
+For a detailed technical description of how the animation works, see
 [architecture.md](architecture.md).
 
-## Guía de estilo
+## Style guide
 
 **C (daemon):**
-- Estándar C11. Sin dependencias más allá de Xlib, XFixes, XInput2 y XExt.
-- Sin warnings con `-Wall -Wextra`.
-- Funciones cortas con una sola responsabilidad.
-- Nombres en `snake_case`.
+- C11 standard. No dependencies beyond Xlib, XFixes, XInput2 and XExt.
+- No warnings with `-Wall -Wextra`.
+- Short functions with a single responsibility.
+- `snake_case` names.
 
 **Python (GUI):**
-- Python 3.6+, sin dependencias fuera de PyGObject.
-- La GUI no contiene lógica de animación: solo edita el archivo de config y
-  controla el daemon.
+- Python 3.6+, no dependencies beyond PyGObject.
+- The GUI contains no animation logic: it only edits the config file and controls the
+  daemon.
+- Wrap every user-facing string in `_()` so it can be translated.
 
-## Proceso para contribuir
+## Translations (i18n)
 
-1. **Abrí un issue** antes de empezar si el cambio es grande, para evitar trabajo
-   duplicado.
-2. **Hacé un fork** y trabajá en una rama descriptiva (`fix/overlay-resize`,
+The GUI is localized with `gettext`. Source strings are in English; translations live
+under `po/`.
+
+To add a new language (for example, French — `fr`):
+
+```bash
+make pot                       # refresh po/cursorpop.pot from the source
+cp po/cursorpop.pot po/fr.po   # create the new catalog
+# translate every msgstr in po/fr.po, then:
+make mo                        # compile to locale/fr/LC_MESSAGES/cursorpop.mo
+LANGUAGE=fr python3 gui/cursorpop-settings.py   # check it
+```
+
+Add the new language code to `LINGUAS` in the `Makefile` so it gets compiled and
+installed. After changing GUI strings, run `make pot` and `msgmerge` the existing
+catalogs.
+
+## How to contribute
+
+1. **Open an issue** before starting if the change is large, to avoid duplicate work.
+2. **Fork** and work on a descriptive branch (`fix/overlay-resize`,
    `feat/wayland-backend`, etc.).
-3. Asegurate de que `make` compile sin warnings.
-4. **Probá en al menos un entorno X11** y aclaralo en el PR (distribución,
-   escritorio, versión).
-5. Para cambios en la GUI, probá también el flujo de autostart y el ícono de
-   bandeja.
+3. Make sure `make` builds without warnings.
+4. **Test on at least one X11 environment** and note it in the PR (distribution,
+   desktop, version).
+5. For GUI changes, also test the autostart flow and the tray icon.
 
-## Ideas para contribuir
+## Ideas to contribute
 
-- Soporte para temas de iconos personalizados en la GUI.
-- Página de manual más completa.
-- Empaquetado para otras distribuciones (RPM, AUR).
-- Tests automatizados para la detección de sacudida.
-- Internacionalización (i18n) de la GUI.
+- Support for custom icon themes in the GUI.
+- A manual language selector in the GUI (override the system language).
+- More translations (see [Translations](#translations-i18n)).
+- Packaging for other distributions (RPM, AUR).
+- Automated tests for shake detection.
+- A more complete manual page.

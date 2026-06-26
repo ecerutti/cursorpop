@@ -1,0 +1,116 @@
+# cursorpop — Spanish translation.
+# Copyright (C) 2026 Esteban Cerutti
+# This file is distributed under the same license as the cursorpop package (MIT).
+# Esteban Cerutti <esteban.cerutti@gmail.com>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: cursorpop 0.3.0\n"
+"Report-Msgid-Bugs-To: esteban.cerutti@gmail.com\n"
+"POT-Creation-Date: 2026-06-25 00:00+0000\n"
+"PO-Revision-Date: 2026-06-25 00:00+0000\n"
+"Last-Translator: Esteban Cerutti <esteban.cerutti@gmail.com>\n"
+"Language-Team: Spanish\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: gui/cursorpop-settings.py:117
+msgid "Low"
+msgstr "Baja"
+
+#: gui/cursorpop-settings.py:117
+msgid "Medium"
+msgstr "Media"
+
+#: gui/cursorpop-settings.py:117
+msgid "High"
+msgstr "Alta"
+
+#: gui/cursorpop-settings.py:223
+msgid "CursorPop Settings"
+msgstr "Configuración de CursorPop"
+
+#: gui/cursorpop-settings.py:238
+msgid "Click effect (Mac style)"
+msgstr "Efecto de click (estilo Mac)"
+
+#: gui/cursorpop-settings.py:243
+msgid "Enable click effect"
+msgstr "Activar efecto de click"
+
+#: gui/cursorpop-settings.py:246
+msgid "Shrink on every click"
+msgstr "Achicar en todos los clicks"
+
+#: gui/cursorpop-settings.py:248
+msgid "Only when held down"
+msgstr "Solo si mantengo apretado"
+
+#: gui/cursorpop-settings.py:260
+msgid "ms"
+msgstr "ms"
+
+#: gui/cursorpop-settings.py:268
+msgid "Size while pressed"
+msgstr "Tamaño al apretar"
+
+#: gui/cursorpop-settings.py:274
+msgid "Shake effect (grow)"
+msgstr "Efecto de sacudida (agrandar)"
+
+#: gui/cursorpop-settings.py:279
+msgid "Enable shake effect"
+msgstr "Activar efecto de sacudida"
+
+#: gui/cursorpop-settings.py:283
+msgid "Size when grown"
+msgstr "Tamaño al agrandar"
+
+#: gui/cursorpop-settings.py:290
+msgid "Sensitivity"
+msgstr "Sensibilidad"
+
+msgid "Appearance"
+msgstr "Apariencia"
+
+msgid "Automatic"
+msgstr "Automático"
+
+msgid "White (dark panel)"
+msgstr "Blanco (panel oscuro)"
+
+msgid "Black (light panel)"
+msgstr "Negro (panel claro)"
+
+msgid "Tray icon"
+msgstr "Ícono de la bandeja"
+
+#: gui/cursorpop-settings.py:295
+msgid "Autostart"
+msgstr "Inicio automático"
+
+#: gui/cursorpop-settings.py:301
+msgid "Start with the graphical session"
+msgstr "Iniciar con la sesión gráfica"
+
+#: gui/cursorpop-settings.py:309
+msgid "Close"
+msgstr "Cerrar"
+
+#: gui/cursorpop-settings.py:311
+msgid "Apply"
+msgstr "Aplicar"
+
+#: gui/cursorpop-settings.py:439
+msgid "Enabled"
+msgstr "Activado"
+
+#: gui/cursorpop-settings.py:445
+msgid "Settings…"
+msgstr "Configuración…"
+
+#: gui/cursorpop-settings.py:448
+msgid "Quit"
+msgstr "Salir"

@@ -5,8 +5,8 @@ Priority: optional
 Architecture: @ARCH@
 Depends: libx11-6, libxfixes3, libxi6, libxext6, python3 (>= 3.6), python3-gi, gir1.2-gtk-3.0
 Maintainer: Esteban Cerutti <esteban.cerutti@gmail.com>
-Homepage: https://github.com/estebanc/cursorpop
-Description: Efectos animados del cursor para X11
- Cursorpop achica el cursor al hacer click (estilo macOS) y lo agranda
- cuando se sacude el mouse para encontrarlo en pantalla.
- Incluye un daemon en C y una GUI GTK con ícono en la bandeja del sistema.
+Homepage: https://github.com/ecerutti/cursorpop
+Description: Animated cursor effects for X11
+ CursorPop shrinks the cursor on click (macOS style) and grows it when you
+ shake the mouse to find it on screen.
+ It ships a C daemon and a GTK GUI with a system tray icon.

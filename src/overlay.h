@@ -1,5 +1,5 @@
-/* overlay.h — Ventana ARGB override-redirect, transparente al click, que
- * dibuja el sprite del cursor por encima de todo. */
+/* overlay.h — ARGB override-redirect, click-through window that draws the
+ * cursor sprite on top of everything else. */
 #ifndef CURSORPOP_OVERLAY_H
 #define CURSORPOP_OVERLAY_H
 
@@ -17,21 +17,22 @@ typedef struct {
     int      cursor_hidden;
 } Overlay;
 
-/* Crea la ventana overlay (oculta al inicio). Devuelve 0 si OK. */
+/* Create the overlay window (hidden initially). Returns 0 on success. */
 int overlay_init(Overlay *o, Display *dpy);
 
 void overlay_destroy(Overlay *o);
 
-/* Muestra el sprite ARGB (w x h) de modo que su hotspot (xhot,yhot) quede
- * exactamente en el punto del puntero (px,py) en coordenadas de pantalla.
- * Oculta el cursor real y mapea la ventana si hace falta. */
+/* Show the ARGB sprite (w x h) so that its hotspot (xhot,yhot) lands exactly
+ * on the pointer position (px,py) in screen coordinates. Hides the real
+ * cursor and maps the window if needed. */
 void overlay_show(Overlay *o, const uint32_t *argb, int w, int h,
                   int px, int py, double xhot, double yhot);
 
-/* Reposiciona el overlay ya visible (para seguir al puntero sin redibujar). */
+/* Reposition the already-visible overlay (to follow the pointer without
+ * redrawing the sprite). */
 void overlay_move(Overlay *o, int px, int py, double xhot, double yhot);
 
-/* Oculta el overlay y restaura el cursor real. */
+/* Hide the overlay and restore the real cursor. */
 void overlay_hide(Overlay *o);
 
 #endif

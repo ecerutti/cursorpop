@@ -1,70 +1,69 @@
-.TH CURSORPOP 1 "2026" "cursorpop 0.1.0" "User Commands"
+.TH CURSORPOP 1 "2026" "cursorpop 0.3.0" "User Commands"
 .SH NAME
-cursorpop \- anima el cursor en X11 (achica al click, agranda al sacudir)
+cursorpop \- animate the X11 cursor (shrink on click, grow on shake)
 .SH SYNOPSIS
 .B cursorpop
-[\fIopciones\fR]
+[\fIoptions\fR]
 .SH DESCRIPTION
 .B cursorpop
-es un daemon liviano que anima el puntero del mouse en sesiones X11, imitando el
-comportamiento de macOS: el cursor se achica al apretar un botón del mouse y
-vuelve con un rebote al soltar, y se agranda momentáneamente al sacudir el mouse.
+is a lightweight daemon that animates the mouse pointer in X11 sessions, mimicking
+macOS behaviour: the cursor shrinks when a mouse button is pressed and returns with
+a bounce on release, and grows momentarily when the mouse is shaken.
 .PP
-Funciona con cualquier forma de cursor y en cualquier entorno de escritorio
-sobre X11. Dibuja un sprite del cursor en una ventana ARGB transparente al click
-y oculta el cursor real sólo mientras dura el efecto; no usa pointer grabs, así
-que no interfiere con los clicks.
+It works with any cursor shape and in any X11 desktop environment. It draws a cursor
+sprite in a click-through ARGB window and hides the real cursor only while the effect
+lasts; it uses no pointer grabs, so it never interferes with clicks.
 .SH OPTIONS
-.SS Efecto de click
+.SS Click effect
 .TP
 .B \-\-no\-press
-Desactiva el efecto de click.
+Disable the click effect.
 .TP
 .B \-\-press\-scale \fIf\fR
-Tamaño del cursor al mantener apretado (default 0.80).
+Cursor size while held down (default 0.80).
 .TP
 .B \-\-press\-delay \fIms\fR
-Tiempo mínimo de apretado para disparar el efecto; los clicks más cortos
-(taps) no animan nada (default 120).
+Minimum hold time to trigger the effect; shorter clicks (taps) animate nothing
+(default 120).
 .TP
 .B \-\-press\-duration \fIms\fR
-Duración del achique (default 100).
+Shrink duration (default 100).
 .TP
 .B \-\-release\-duration \fIms\fR
-Duración del retorno con rebote (default 240).
+Return-with-bounce duration (default 240).
 .TP
-.B \-\-press\-ease \fIcurva\fR
-Curva de easing del achique (default easeOut).
+.B \-\-press\-ease \fIcurve\fR
+Easing curve for the shrink (default easeOut).
 .TP
-.B \-\-release\-ease \fIcurva\fR
-Curva de easing del retorno (default easeOutBack).
-.SS Efecto de sacudida
+.B \-\-release\-ease \fIcurve\fR
+Easing curve for the return (default easeOutBack).
+.SS Shake effect
 .TP
 .B \-\-no\-wiggle
-Desactiva el efecto de sacudida.
+Disable the shake effect.
 .TP
 .B \-\-grow\-scale \fIf\fR
-Factor máximo al agrandar (default 2.0).
+Maximum grow factor (default 2.0).
 .TP
 .B \-\-grow\-duration \fIms\fR, \-\-grow\-hold \fIms\fR, \-\-grow\-shrink \fIms\fR
-Tiempos del crecimiento, la espera y el retorno.
+Grow, hold and return times.
 .TP
 .B \-\-wiggle\-window \fIms\fR, \-\-wiggle\-distance \fIpx\fR, \-\-wiggle\-flips \fIn\fR, \-\-wiggle\-velocity \fIpx/ms\fR
-Umbrales de detección de la sacudida.
+Shake detection thresholds.
 .SS General
 .TP
 .B \-\-fps \fIn\fR
-Cuadros por segundo de la animación (default 60).
+Animation frames per second (default 60).
 .TP
 .B \-h, \-\-help
-Muestra la ayuda.
+Show the help.
 .TP
 .B \-v, \-\-version
-Muestra la versión.
+Show the version.
 .SH EASING
 Presets: linear, ease, easeIn, easeOut, easeInOut, easeOutCubic, easeInCubic,
-easeOutExpo, easeOutBack, easeInOutBack; o una curva custom \fIx1,y1,x2,y2\fR.
+easeOutExpo, easeOutBack, easeInOutBack; or a custom curve \fIx1,y1,x2,y2\fR.
 .SH LIMITATIONS
-Sólo X11. Requiere un compositor activo para la transparencia del overlay.
+X11 only. Requires an active compositor for the overlay transparency.
 .SH LICENSE
 MIT.

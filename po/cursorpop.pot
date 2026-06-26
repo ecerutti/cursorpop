@@ -1,0 +1,122 @@
+# CursorPop — translation template.
+# Copyright (C) 2026 Esteban Cerutti
+# This file is distributed under the same license as the cursorpop package (MIT).
+# To add a language: cp po/cursorpop.pot po/<lang>.po, translate, then `make mo`.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: cursorpop 0.3.0\n"
+"Report-Msgid-Bugs-To: esteban.cerutti@gmail.com\n"
+"POT-Creation-Date: 2026-06-26 03:45-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: gui/cursorpop-settings.py:185
+msgid "Low"
+msgstr ""
+
+#: gui/cursorpop-settings.py:185
+msgid "Medium"
+msgstr ""
+
+#: gui/cursorpop-settings.py:185
+msgid "High"
+msgstr ""
+
+#: gui/cursorpop-settings.py:292
+msgid "CursorPop Settings"
+msgstr ""
+
+#: gui/cursorpop-settings.py:307
+msgid "Click effect (Mac style)"
+msgstr ""
+
+#: gui/cursorpop-settings.py:312
+msgid "Enable click effect"
+msgstr ""
+
+#: gui/cursorpop-settings.py:315
+msgid "Shrink on every click"
+msgstr ""
+
+#: gui/cursorpop-settings.py:317
+msgid "Only when held down"
+msgstr ""
+
+#: gui/cursorpop-settings.py:329
+msgid "ms"
+msgstr ""
+
+#: gui/cursorpop-settings.py:337
+msgid "Size while pressed"
+msgstr ""
+
+#: gui/cursorpop-settings.py:343
+msgid "Shake effect (grow)"
+msgstr ""
+
+#: gui/cursorpop-settings.py:348
+msgid "Enable shake effect"
+msgstr ""
+
+#: gui/cursorpop-settings.py:352
+msgid "Size when grown"
+msgstr ""
+
+#: gui/cursorpop-settings.py:359
+msgid "Sensitivity"
+msgstr ""
+
+#: gui/cursorpop-settings.py:364
+msgid "Appearance"
+msgstr ""
+
+#: gui/cursorpop-settings.py:369
+msgid "Automatic"
+msgstr ""
+
+#: gui/cursorpop-settings.py:370
+msgid "White (dark panel)"
+msgstr ""
+
+#: gui/cursorpop-settings.py:371
+msgid "Black (light panel)"
+msgstr ""
+
+#: gui/cursorpop-settings.py:375
+msgid "Tray icon"
+msgstr ""
+
+#: gui/cursorpop-settings.py:380
+msgid "Autostart"
+msgstr ""
+
+#: gui/cursorpop-settings.py:386
+msgid "Start with the graphical session"
+msgstr ""
+
+#: gui/cursorpop-settings.py:399
+msgid "Close"
+msgstr ""
+
+#: gui/cursorpop-settings.py:401
+msgid "Apply"
+msgstr ""
+
+#: gui/cursorpop-settings.py:533
+msgid "Enabled"
+msgstr ""
+
+#: gui/cursorpop-settings.py:539
+msgid "Settings…"
+msgstr ""
+
+#: gui/cursorpop-settings.py:542
+msgid "Quit"
+msgstr ""

@@ -1,77 +1,77 @@
-# Referencia CLI — cursorpop
+# CLI reference — cursorpop
 
-## Uso
+## Usage
 
 ```bash
-cursorpop [opciones]
+cursorpop [options]
 ```
 
-El daemon corre en primer plano. Para correrlo en segundo plano: `cursorpop &`
+The daemon runs in the foreground. To run it in the background: `cursorpop &`
 
-Para recargar la config sin reiniciar: `kill -HUP $(cat $XDG_RUNTIME_DIR/cursorpop.pid)`
+To reload the config without restarting: `kill -HUP $(cat $XDG_RUNTIME_DIR/cursorpop.pid)`
 
-## Opciones
+## Options
 
-### Efecto de click
+### Click effect
 
-| Opción | Valor | Default | Descripción |
+| Option | Value | Default | Description |
 |--------|-------|---------|-------------|
-| `--no-press` | — | — | Desactiva el efecto de click completamente |
-| `--press-scale` | float | `0.80` | Tamaño del cursor al apretar (0.5 = mitad, 1.0 = sin cambio) |
-| `--press-delay` | ms | `120` | Tiempo mínimo apretado para disparar el efecto. `0` lo activa en todos los clicks, incluso taps rápidos |
-| `--press-duration` | ms | `100` | Duración de la animación de achique |
-| `--release-duration` | ms | `240` | Duración de la animación de retorno (incluye el rebote) |
-| `--press-ease` | curva | `easeOut` | Curva de easing del achique |
-| `--release-ease` | curva | `easeOutBack` | Curva de easing del retorno. `easeOutBack` produce el rebote |
+| `--no-press` | — | — | Disable the click effect entirely |
+| `--press-scale` | float | `0.80` | Cursor size while pressed (0.5 = half, 1.0 = no change) |
+| `--press-delay` | ms | `120` | Minimum hold time to trigger the effect. `0` triggers on every click, even quick taps |
+| `--press-duration` | ms | `100` | Duration of the shrink animation |
+| `--release-duration` | ms | `240` | Duration of the return animation (includes the bounce) |
+| `--press-ease` | curve | `easeOut` | Easing curve for the shrink |
+| `--release-ease` | curve | `easeOutBack` | Easing curve for the return. `easeOutBack` produces the bounce |
 
-### Efecto de sacudida
+### Shake effect
 
-| Opción | Valor | Default | Descripción |
+| Option | Value | Default | Description |
 |--------|-------|---------|-------------|
-| `--no-wiggle` | — | — | Desactiva el efecto de sacudida completamente |
-| `--grow-scale` | float | `2.0` | Factor de agrandado máximo (2.0 = el doble del tamaño) |
-| `--grow-duration` | ms | `250` | Duración del crecimiento |
-| `--grow-hold` | ms | `200` | Tiempo que se mantiene grande tras dejar de sacudir |
-| `--grow-shrink` | ms | `200` | Duración del retorno al tamaño normal |
-| `--grow-ease` | curva | `easeOut` | Curva de easing del crecimiento |
-| `--grow-shrink-ease` | curva | `easeInOut` | Curva de easing del retorno |
-| `--wiggle-window` | ms | `600` | Ventana de tiempo en la que se mide la sacudida |
-| `--wiggle-distance` | px | `1200` | Distancia total mínima del movimiento para disparar |
-| `--wiggle-flips` | n | `4` | Cambios de dirección horizontal mínimos |
-| `--wiggle-velocity` | px/ms | `2.0` | Velocidad media mínima |
+| `--no-wiggle` | — | — | Disable the shake effect entirely |
+| `--grow-scale` | float | `2.0` | Maximum grow factor (2.0 = twice the size) |
+| `--grow-duration` | ms | `250` | Duration of the growth |
+| `--grow-hold` | ms | `200` | Time it stays big after the shake stops |
+| `--grow-shrink` | ms | `200` | Duration of the return to normal size |
+| `--grow-ease` | curve | `easeOut` | Easing curve for the growth |
+| `--grow-shrink-ease` | curve | `easeInOut` | Easing curve for the return |
+| `--wiggle-window` | ms | `600` | Time window in which the shake is measured |
+| `--wiggle-distance` | px | `1200` | Minimum total movement distance to trigger |
+| `--wiggle-flips` | n | `4` | Minimum horizontal direction changes |
+| `--wiggle-velocity` | px/ms | `2.0` | Minimum average velocity |
 
 ### General
 
-| Opción | Valor | Default | Descripción |
+| Option | Value | Default | Description |
 |--------|-------|---------|-------------|
-| `--fps` | n | `60` | Cuadros por segundo de la animación |
-| `--help` | — | — | Muestra la ayuda y sale |
-| `--version` | — | — | Muestra la versión y sale |
+| `--fps` | n | `60` | Animation frames per second |
+| `--help` | — | — | Show the help and exit |
+| `--version` | — | — | Show the version and exit |
 
-## Curvas de easing disponibles
+## Available easing curves
 
-| Nombre | Descripción |
-|--------|-------------|
-| `linear` | Sin suavizado |
-| `ease` | Suavizado estándar CSS |
-| `easeIn` | Empieza lento, termina rápido |
-| `easeOut` | Empieza rápido, termina lento |
-| `easeInOut` | Lento en ambos extremos |
-| `easeOutCubic` | `easeOut` más pronunciado |
-| `easeInCubic` | `easeIn` más pronunciado |
-| `easeOutExpo` | Desaceleración exponencial |
-| `easeOutBack` | Rebasa levemente el destino y vuelve (rebote) |
-| `easeInOutBack` | Rebote en ambos extremos |
-| `x1,y1,x2,y2` | Curva cubic-bézier custom (igual que CSS) |
+| Name | Description |
+|------|-------------|
+| `linear` | No smoothing |
+| `ease` | Standard CSS smoothing |
+| `easeIn` | Starts slow, ends fast |
+| `easeOut` | Starts fast, ends slow |
+| `easeInOut` | Slow at both ends |
+| `easeOutCubic` | A stronger `easeOut` |
+| `easeInCubic` | A stronger `easeIn` |
+| `easeOutExpo` | Exponential deceleration |
+| `easeOutBack` | Overshoots the target slightly and returns (bounce) |
+| `easeInOutBack` | Bounce at both ends |
+| `x1,y1,x2,y2` | Custom cubic-bézier curve (same as CSS) |
 
-## Archivo de configuración
+## Config file
 
-Ubicación: `~/.config/cursorpop/cursorpop.conf`
+Location: `~/.config/cursorpop/cursorpop.conf`
 
-Ejemplo:
+Example:
 
 ```ini
-# cursorpop — generado por cursorpop-settings
+# cursorpop — generated by cursorpop-settings
 enabled=1
 press_enabled=1
 press_scale=0.80
@@ -94,8 +94,8 @@ wiggle_velocity=2.0
 fps=60
 ```
 
-Los flags de CLI tienen prioridad sobre los valores del archivo. El daemon recarga
-el archivo con `SIGHUP` (la GUI lo hace automáticamente al aplicar cambios).
+CLI flags take precedence over the file values. The daemon reloads the file on `SIGHUP`
+(the GUI does this automatically when applying changes).
 
-La clave `enabled` la usa solo la GUI para saber si debe arrancar el daemon; el
-daemon la ignora.
+The `enabled` key is used only by the GUI to decide whether to start the daemon; the
+daemon ignores it.

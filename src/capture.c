@@ -1,4 +1,4 @@
-/* capture.c — Captura del cursor vía XFixes y escalado bilineal premultiplicado. */
+/* capture.c — Cursor capture via XFixes and premultiplied bilinear scaling. */
 #include "capture.h"
 #include <X11/extensions/Xfixes.h>
 #include <stdlib.h>
@@ -12,8 +12,8 @@ int capture_current_cursor(Display *dpy, CursorImage *out) {
     out->pixels = malloc(n * sizeof(uint32_t));
     if (!out->pixels) { XFree(ci); return -1; }
 
-    /* XFixes entrega cada pixel ARGB premultiplicado en los 32 bits bajos
-     * de un 'unsigned long' (8 bytes en 64-bit). Lo empaquetamos a uint32. */
+    /* XFixes delivers each premultiplied ARGB pixel in the low 32 bits of an
+     * 'unsigned long' (8 bytes on 64-bit). We pack it down to uint32. */
     for (size_t i = 0; i < n; i++)
         out->pixels[i] = (uint32_t)ci->pixels[i];
 
@@ -36,7 +36,7 @@ static inline uint32_t sample(const CursorImage *s, int x, int y) {
     return s->pixels[(size_t)y * s->width + x];
 }
 
-/* Interpola un canal (byte) entre 4 muestras. */
+/* Interpolate one channel (byte) between 4 samples. */
 static inline int lerp_ch(uint32_t a, uint32_t b, uint32_t c, uint32_t d,
                           int shift, double fx, double fy) {
     double top = ((a >> shift) & 0xFF) * (1 - fx) + ((b >> shift) & 0xFF) * fx;

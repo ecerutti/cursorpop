@@ -1,138 +1,155 @@
-# cursorpop
+<!-- Language: **English** · [Español](README.es.md) -->
 
-Dos pequeños efectos visuales para el cursor del mouse en Linux, inspirados en macOS:
+# CursorPop
 
-- **Al hacer click**, el cursor se achica un instante y vuelve con un pequeño rebote.
-- **Al sacudir el mouse** rápido de un lado a otro, el cursor crece temporalmente para que lo encuentres en pantalla.
+[![CI](https://github.com/ecerutti/cursorpop/actions/workflows/ci.yml/badge.svg)](https://github.com/ecerutti/cursorpop/actions/workflows/ci.yml)
 
-Funciona en cualquier escritorio sobre X11: Cinnamon, GNOME, KDE, XFCE, MATE y otros.
+Two small visual effects for the mouse cursor on Linux, inspired by macOS:
 
-> v0.1.0 — Probado en Linux Mint Debian Edition (Cinnamon).
+- **On click**, the cursor briefly shrinks and comes back with a little bounce.
+- **On shaking the mouse** quickly side to side, the cursor grows for a moment so you can find it on screen.
+
+Works on any X11 desktop: Cinnamon, GNOME, KDE, XFCE, MATE and others.
+
+> v0.3.0 — Tested on Linux Mint Debian Edition (Cinnamon).
+
+The settings window follows your **system language** (English and Spanish are
+included; anything else falls back to English).
 
 ---
 
-## Instalación
+## Installation
 
-### Opción 1 — Paquete Debian (más fácil)
+### Option 1 — Debian package (easiest)
 
-Descargá el archivo `.deb` desde la [página de releases](https://github.com/ecerutti/cursorpop/releases) e instalalo con doble click, o desde la terminal:
+Download the `.deb` file from the [releases page](https://github.com/ecerutti/cursorpop/releases) and install it with a double click, or from the terminal:
 
 ```bash
-sudo dpkg -i cursorpop_0.1.0_amd64.deb
+sudo dpkg -i cursorpop_0.3.0_amd64.deb
 ```
 
-Si faltara alguna dependencia, ejecutá después:
+If a dependency is missing, run afterwards:
 
 ```bash
 sudo apt install -f
 ```
 
-### Opción 2 — Compilar desde el código fuente
+### Option 2 — Build from source
 
-**1. Instalá las dependencias:**
+**1. Install the dependencies:**
 
 ```bash
 # Debian / Ubuntu / Linux Mint / LMDE
-sudo apt install build-essential libx11-dev libxfixes-dev libxi-dev libxext-dev \
+sudo apt install build-essential gettext libx11-dev libxfixes-dev libxi-dev libxext-dev \
                  python3-gi gir1.2-gtk-3.0 gir1.2-xapp-1.0
 ```
 
-**2. Compilá e instalá:**
+**2. Build and install:**
 
 ```bash
 make
 sudo make install
 ```
 
-**3. (Opcional) Para generar un paquete `.deb` vos mismo:**
+**3. (Optional) Build a `.deb` package yourself:**
 
 ```bash
 make deb
-sudo dpkg -i cursorpop_0.1.0_amd64.deb
+sudo dpkg -i cursorpop_0.3.0_amd64.deb
 ```
 
 ---
 
-## Primeros pasos
+## Getting started
 
-Después de instalar, abrí **Configuración de Cursorpop** desde el menú de tu escritorio (está en Preferencias o Accesorios).
+After installing, open **CursorPop Settings** from your desktop menu (under Preferences or Accessories).
 
-Se abre una ventana donde podés:
+A window opens where you can:
 
-- Activar o desactivar cada efecto por separado.
-- Ajustar cuánto se achica el cursor al hacer click y cuánto crece al sacudir.
-- **Activar el inicio automático** con la sesión gráfica — solo marcá el tilde "Iniciar con la sesión gráfica" y listo.
+- Turn each effect on or off independently.
+- Adjust how much the cursor shrinks on click and how much it grows on shake.
+- **Enable autostart** with the graphical session — just tick "Start with the graphical session" and you're done.
 
-Al hacer click en **Aplicar**, los cambios se aplican de inmediato. Al cerrar la ventana, cursorpop queda corriendo en la bandeja del sistema (el ícono del mouse en la esquina del panel).
+When you click **Apply**, the changes take effect immediately. When you close the window, cursorpop keeps running in the system tray (the mouse icon in the corner of the panel).
 
-### Bandeja del sistema
+### System tray
 
-Desde el ícono de la bandeja podés:
+From the tray icon you can:
 
-- Activar o desactivar cursorpop con un solo click.
-- Abrir la ventana de configuración.
-- Cerrar la aplicación completamente.
+- Turn cursorpop on or off with a single click.
+- Open the settings window.
+- Quit the application entirely.
 
 ---
 
-## Desinstalar
+## Uninstall
 
-Si instalaste con el paquete `.deb`:
+### If you installed the `.deb` package
 
 ```bash
 sudo apt remove cursorpop
 ```
 
-Si instalaste con `make install`:
+### If you installed with `make install`
 
 ```bash
 sudo make uninstall
 ```
 
+### Optional — remove your personal data
+
+The steps above remove the program but leave your per-user files (settings and
+the autostart entry) untouched. To remove those too:
+
+```bash
+rm -rf ~/.config/cursorpop ~/.config/autostart/cursorpop.desktop
+```
+
 ---
 
-## Preguntas frecuentes
+## FAQ
 
-**¿Funciona con Wayland?**
-No. Wayland no permite este tipo de efecto global sobre el cursor. Funciona solo en sesiones X11.
+**Does it work on Wayland?**
+No. Wayland does not allow this kind of global cursor effect. It only works in X11 sessions.
 
-**¿El cursor se ve borroso al agrandarse?**
-Con factores de escala muy grandes (más de 2×) puede verse algo borroso, ya que la imagen del cursor se escala por software. Con el valor por defecto (2×) se ve bien.
+**The cursor looks blurry when it grows.**
+With very large scale factors (above 2×) it can look a bit blurry, since the cursor image is scaled in software. At the default value (2×) it looks fine.
 
-**¿Necesita algún compositor especial?**
-Necesita que haya un compositor activo para la transparencia del efecto. La mayoría de los escritorios modernos lo tienen por defecto (en Cinnamon, GNOME, KDE y XFCE ya viene activado).
+**Does it need a special compositor?**
+It needs an active compositor for the effect's transparency. Most modern desktops have one by default (Cinnamon, GNOME, KDE and XFCE enable it out of the box).
 
-**La GUI no aparece en el menú después de instalar**
-Probá cerrar sesión y volver a entrar, o ejecutar en la terminal:
+**The GUI does not appear in the menu after installing.**
+Try logging out and back in, or run in the terminal:
 ```bash
 update-desktop-database ~/.local/share/applications
 ```
 
 ---
 
-## Configuración avanzada (línea de comandos)
+## Advanced configuration (command line)
 
-Para usuarios que prefieren no usar la GUI, el daemon acepta opciones al correr:
+For users who prefer not to use the GUI, the daemon accepts options when run:
 
 ```bash
 cursorpop --press-scale 0.75 --grow-scale 2.5 --no-wiggle
 ```
 
-Y lee `~/.config/cursorpop/cursorpop.conf` al iniciar. Ver la
-[referencia completa de CLI y configuración](docs/cli-reference.md).
+It also reads `~/.config/cursorpop/cursorpop.conf` at startup. See the
+[full CLI and configuration reference](docs/cli-reference.md).
 
 ---
 
-## Para desarrolladores
+## For developers
 
-| Documento | Contenido |
-|-----------|-----------|
-| [docs/architecture.md](docs/architecture.md) | Cómo funciona internamente: X11, overlay, easing, detección de sacudida |
-| [docs/cli-reference.md](docs/cli-reference.md) | Todas las opciones CLI y el formato del archivo de config |
-| [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | Cómo compilar, estructura del código, guía de estilo y cómo contribuir |
+| Document | Contents |
+|----------|----------|
+| [docs/architecture.md](docs/architecture.md) | How it works internally: X11, overlay, easing, shake detection |
+| [docs/cli-reference.md](docs/cli-reference.md) | All CLI options and the config file format |
+| [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | How to build, code structure, style guide and how to contribute |
+| [CHANGELOG.md](CHANGELOG.md) | Release history |
 
 ---
 
-## Licencia
+## License
 
-MIT — ver [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).

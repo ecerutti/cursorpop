@@ -1,14 +1,14 @@
 /*
- * cursorpop.c — Daemon que anima el cursor en X11.
+ * cursorpop.c — Daemon that animates the X11 cursor.
  *
- *   • Al apretar un botón del mouse, el cursor se achica (estilo macOS) y al
- *     soltar vuelve con un pequeño rebote.
- *   • Al sacudir el mouse rápido, el cursor se agranda y vuelve.
+ *   • On mouse button press the cursor shrinks (macOS style) and on release it
+ *     comes back with a little bounce.
+ *   • On a quick mouse shake the cursor grows and then returns.
  *
- * Funciona en cualquier entorno X11 (Cinnamon, GNOME, KDE, Xfce, i3, ...).
- * Técnica: ventana ARGB override-redirect transparente al click que muestra
- * un sprite del cursor; el cursor real se oculta sólo mientras dura el efecto.
- * No hace pointer grab, así que no interfiere con los clicks.
+ * Works in any X11 environment (Cinnamon, GNOME, KDE, Xfce, i3, ...).
+ * Technique: a click-through ARGB override-redirect window shows a cursor
+ * sprite; the real cursor is hidden only while the effect lasts. It does no
+ * pointer grab, so it never interferes with clicks.
  */
 #include "config.h"
 #include "capture.h"
@@ -30,12 +30,12 @@
 
 enum State {
     ST_IDLE,
-    ST_PRESS_IN,    /* achicando */
-    ST_HELD,        /* mantenido, a press_scale */
-    ST_RELEASE_OUT, /* volviendo a 1.0 con rebote */
-    ST_GROW_IN,     /* agrandando por sacudida */
-    ST_GROW_HELD,   /* agrandado, se mantiene mientras siga la sacudida */
-    ST_GROW_OUT,    /* volviendo a 1.0 */
+    ST_PRESS_IN,    /* shrinking */
+    ST_HELD,        /* held, at press_scale */
+    ST_RELEASE_OUT, /* returning to 1.0 with bounce */
+    ST_GROW_IN,     /* growing from a shake */
+    ST_GROW_HELD,   /* grown, held while the shake continues */
+    ST_GROW_OUT,    /* returning to 1.0 */
 };
 
 typedef struct {
@@ -49,7 +49,7 @@ typedef struct {
     CursorImage base;
     int         has_base;
 
-    double scale;          /* escala actual del cursor */
+    double scale;          /* current cursor scale */
 
     /* tween en curso */
     double          tw_from, tw_to;
@@ -57,11 +57,11 @@ typedef struct {
     int             tw_dur_ms;
     Easing          tw_ease;
 
-    int px, py;            /* última posición conocida del puntero */
-    int buttons_down;      /* botones de click (no rueda) apretados */
-    long grow_keep_until;  /* mantener agrandado hasta este instante (ms) */
-    int  press_pending;    /* apretado esperando superar el umbral de tiempo */
-    long press_pending_at; /* instante del apretado (ms) */
+    int px, py;            /* last known pointer position */
+    int buttons_down;      /* click buttons (not wheel) currently held */
+    long grow_keep_until;  /* keep grown until this instant (ms) */
+    int  press_pending;    /* press waiting to pass the time threshold */
+    long press_pending_at; /* instant of the press (ms) */
 } Engine;
 
 static volatile sig_atomic_t g_stop = 0;
@@ -69,7 +69,7 @@ static volatile sig_atomic_t g_reload = 0;
 static void on_sig(int s) { (void)s; g_stop = 1; }
 static void on_hup(int s) { (void)s; g_reload = 1; }
 
-/* PID file: deja que la GUI encuentre el daemon para mandarle SIGHUP/SIGTERM. */
+/* PID file: lets the GUI find the daemon to send it SIGHUP/SIGTERM. */
 static char g_pidfile[512];
 
 static void write_pidfile(void) {
@@ -86,7 +86,7 @@ static void remove_pidfile(void) {
     if (g_pidfile[0]) unlink(g_pidfile);
 }
 
-/* ---- helpers de tiempo ---- */
+/* ---- time helpers ---- */
 static long now_ms(void) {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -99,7 +99,7 @@ static long elapsed_ms(struct timespec *start) {
            (ts.tv_nsec - start->tv_nsec) / 1000000L;
 }
 
-/* ---- animación ---- */
+/* ---- animation ---- */
 static void start_tween(Engine *e, double from, double to, int dur_ms, Easing ease) {
     e->tw_from = from;
     e->tw_to   = to;
@@ -109,7 +109,7 @@ static void start_tween(Engine *e, double from, double to, int dur_ms, Easing ea
     e->scale = from;
 }
 
-/* Dibuja el cursor base a la escala actual, posicionado en el puntero. */
+/* Draw the base cursor at the current scale, positioned at the pointer. */
 static void redraw(Engine *e) {
     if (!e->has_base) return;
     int w, h;
@@ -120,7 +120,7 @@ static void redraw(Engine *e) {
     free(buf);
 }
 
-/* Reposiciona el overlay ya visible (en movimiento, sin redibujar el sprite). */
+/* Reposition the already-visible overlay (on motion, without redrawing the sprite). */
 static void reposition(Engine *e) {
     if (!e->has_base || !e->overlay.mapped) return;
     overlay_move(&e->overlay, e->px, e->py,
@@ -141,37 +141,37 @@ static void end_effect(Engine *e) {
     if (e->has_base) { cursor_image_free(&e->base); e->has_base = 0; }
     e->state = ST_IDLE;
     e->scale = 1.0;
-    wiggle_reset(&e->wiggle);   /* evita re-disparos con muestras viejas */
+    wiggle_reset(&e->wiggle);   /* avoid re-triggering with stale samples */
 }
 
-/* ---- eventos ---- */
+/* ---- events ---- */
 static int is_click_button(int detail) {
-    /* Ignora la rueda del mouse (4-7). 1=izq 2=medio 3=der 8/9=laterales. */
+    /* Ignore the mouse wheel (4-7). 1=left 2=middle 3=right 8/9=side buttons. */
     return !(detail >= 4 && detail <= 7);
 }
 
 static void on_button_press(Engine *e, int detail) {
     if (!is_click_button(detail)) return;
     e->buttons_down++;
-    if (e->buttons_down != 1) return;           /* ya había uno apretado */
+    if (e->buttons_down != 1) return;           /* one was already pressed */
     if (!e->cfg.press_enabled) return;
 
     if (e->state == ST_IDLE) {
         if (e->cfg.press_delay_ms <= 0) {
-            /* Modo "todos los clicks": el achique arranca ya. */
+            /* "All clicks" mode: the shrink starts right away. */
             begin_effect(e);
             e->state = ST_PRESS_IN;
             start_tween(e, 1.0, e->cfg.press_scale,
                         e->cfg.press_duration_ms, e->cfg.press_ease);
             redraw(e);
         } else {
-            /* Modo "solo al mantener": esperamos a ver si es un tap corto o un
-             * apretado deliberado. Arranca al superar press_delay_ms. */
+            /* "Hold only" mode: wait to see if it's a short tap or a deliberate
+             * press. It starts once press_delay_ms is exceeded. */
             e->press_pending = 1;
             e->press_pending_at = now_ms();
         }
     } else {
-        /* Veníamos de un efecto de sacudida: el click toma el control ya. */
+        /* We came from a shake effect: the click takes over right away. */
         e->state = ST_PRESS_IN;
         start_tween(e, e->scale, e->cfg.press_scale,
                     e->cfg.press_duration_ms, e->cfg.press_ease);
@@ -185,7 +185,7 @@ static void on_button_release(Engine *e, int detail) {
     if (e->buttons_down != 0) return;
 
     if (e->press_pending) {
-        e->press_pending = 0;   /* fue un tap corto: no mostramos nada */
+        e->press_pending = 0;   /* it was a short tap: show nothing */
         return;
     }
     if (e->state == ST_PRESS_IN || e->state == ST_HELD) {
@@ -198,13 +198,13 @@ static void on_button_release(Engine *e, int detail) {
 static void on_motion(Engine *e, int px, int py) {
     e->px = px; e->py = py;
 
-    /* La sacudida sólo actúa cuando no hay un efecto de click en curso. */
+    /* The shake only acts when no click effect is in progress. */
     int click_busy = (e->state == ST_PRESS_IN || e->state == ST_HELD ||
                       e->state == ST_RELEASE_OUT) || e->buttons_down > 0;
 
     if (e->cfg.wiggle_enabled && !click_busy &&
         wiggle_feed(&e->wiggle, now_ms(), px, py)) {
-        /* Mientras se siga detectando sacudida, mantenemos el cursor grande. */
+        /* While a shake keeps being detected, keep the cursor big. */
         e->grow_keep_until = now_ms() + e->cfg.grow_hold_ms;
         switch (e->state) {
         case ST_IDLE:
@@ -214,12 +214,12 @@ static void on_motion(Engine *e, int px, int py) {
                         e->cfg.grow_duration_ms, e->cfg.grow_ease);
             redraw(e);
             break;
-        case ST_GROW_OUT:   /* estaba volviendo: re-agrandar */
+        case ST_GROW_OUT:   /* it was returning: grow again */
             e->state = ST_GROW_IN;
             start_tween(e, e->scale, e->cfg.grow_scale,
                         e->cfg.grow_duration_ms, e->cfg.grow_ease);
             break;
-        default:            /* GROW_IN / GROW_HELD: sólo refrescar el timer */
+        default:            /* GROW_IN / GROW_HELD: just refresh the timer */
             break;
         }
     }
@@ -227,11 +227,11 @@ static void on_motion(Engine *e, int px, int py) {
     if (e->state != ST_IDLE) reposition(e);
 }
 
-/* Avanza la animación. Devuelve 1 si hay una animación activa (necesita más
- * cuadros), 0 si está en reposo o sólo esperando un temporizador. */
+/* Advance the animation. Returns 1 if an animation is active (needs more
+ * frames), 0 if idle or only waiting on a timer. */
 static int tick(Engine *e) {
-    /* ¿El apretado superó el umbral? Recién ahí arranca el achique (los taps
-     * cortos se cancelan en on_button_release antes de llegar acá). */
+    /* Did the press pass the threshold? Only then does the shrink start (short
+     * taps are cancelled in on_button_release before getting here). */
     if (e->press_pending &&
         now_ms() - e->press_pending_at >= e->cfg.press_delay_ms) {
         e->press_pending = 0;
@@ -258,7 +258,7 @@ static int tick(Engine *e) {
         if (p >= 1.0) {
             switch (e->state) {
             case ST_PRESS_IN:
-                e->state = ST_HELD;              /* el release pudo cambiarlo */
+                e->state = ST_HELD;              /* the release may have changed it */
                 break;
             case ST_RELEASE_OUT:
                 end_effect(e);
@@ -276,13 +276,13 @@ static int tick(Engine *e) {
                e->state == ST_GROW_IN  || e->state == ST_GROW_OUT;
     }
     case ST_GROW_HELD:
-        /* Se queda grande hasta que dejás de sacudir (el timer no se refresca). */
+        /* Stays big until you stop shaking (the timer is not refreshed). */
         if (now_ms() >= e->grow_keep_until) {
             e->state = ST_GROW_OUT;
             start_tween(e, e->scale, 1.0,
                         e->cfg.grow_shrink_ms, e->cfg.grow_shrink_ease);
         }
-        return 1;   /* sigue necesitando temporizador */
+        return 1;   /* still needs a timer */
     case ST_HELD:
     case ST_IDLE:
     default:
@@ -316,22 +316,22 @@ int main(int argc, char **argv) {
     config_default_path(cfgpath, sizeof cfgpath);
 
     config_defaults(&e.cfg);
-    config_load_file(&e.cfg, cfgpath);          /* archivo (lo escribe la GUI) */
-    int pr = config_parse(&e.cfg, argc, argv);  /* los flags CLI tienen prioridad */
+    config_load_file(&e.cfg, cfgpath);          /* file (written by the GUI) */
+    int pr = config_parse(&e.cfg, argc, argv);  /* CLI flags take precedence */
     if (pr != 0) return pr < 0 ? 2 : 0;
 
     e.dpy = XOpenDisplay(NULL);
-    if (!e.dpy) { fprintf(stderr, "cursorpop: no pude abrir el display X.\n"); return 1; }
+    if (!e.dpy) { fprintf(stderr, "cursorpop: could not open the X display.\n"); return 1; }
 
     int xf_ev, xf_err;
     if (!XFixesQueryExtension(e.dpy, &xf_ev, &xf_err)) {
-        fprintf(stderr, "cursorpop: se requiere la extensión XFixes.\n"); return 1;
+        fprintf(stderr, "cursorpop: the XFixes extension is required.\n"); return 1;
     }
     if (setup_xinput(e.dpy, &e.xi_opcode) != 0) {
-        fprintf(stderr, "cursorpop: se requiere XInput2.\n"); return 1;
+        fprintf(stderr, "cursorpop: XInput2 is required.\n"); return 1;
     }
     if (overlay_init(&e.overlay, e.dpy) != 0) {
-        fprintf(stderr, "cursorpop: no hay un visual ARGB de 32 bits (¿compositor activo?).\n");
+        fprintf(stderr, "cursorpop: no 32-bit ARGB visual (is a compositor running?).\n");
         return 1;
     }
     wiggle_init(&e.wiggle, &e.cfg);
@@ -359,8 +359,8 @@ int main(int argc, char **argv) {
             if (frame_ms < 1) frame_ms = 1;
         }
 
-        /* Necesitamos timer de cuadro cuando hay animación, cuando estamos
-         * agrandados esperando (GROW_HELD) o cuando un press está pendiente. */
+        /* We need a frame timer when animating, when grown and waiting
+         * (GROW_HELD), or when a press is pending. */
         int busy = (e.state != ST_IDLE && e.state != ST_HELD) || e.press_pending;
 
         fd_set fds; FD_ZERO(&fds); FD_SET(fd, &fds);

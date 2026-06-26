@@ -1,26 +1,26 @@
 /*
- * spike2_overlay.c — Validación v2 para "cursorpop" (enfoque OVERLAY)
+ * spike2_overlay.c — Validation v2 for "cursorpop" (OVERLAY approach)
  *
- * Basado en la solución probada de wiggle-grow (window_mode): en vez de
- * intentar cambiar el cursor de hardware (que roba clicks o no re-renderiza),
- * dibujamos una ventana ARGB override-redirect, transparente al click, que
- * muestra un sprite del cursor. El cursor real se oculta SOLO mientras el
- * efecto está activo, y se restaura al soltar.
+ * Based on the proven wiggle-grow solution (window_mode): instead of trying to
+ * change the hardware cursor (which steals clicks or does not re-render), we
+ * draw an ARGB override-redirect, click-through window that shows a cursor
+ * sprite. The real cursor is hidden ONLY while the effect is active, and is
+ * restored on release.
  *
- * Diferencia clave con el spike anterior: usa eventos XInput2 NORMALES
- * (XI_ButtonPress/Release/Motion) con deviceid=XIAllDevices sobre la root,
- * que es EXACTAMENTE como wiggle-grow detecta input (probado en máquinas
- * reales). El spike anterior usaba RAW events, que quizá no se entregaban.
+ * Key difference from the previous spike: it uses NORMAL XInput2 events
+ * (XI_ButtonPress/Release/Motion) with deviceid=XIAllDevices on the root,
+ * which is EXACTLY how wiggle-grow detects input (tested on real machines).
+ * The previous spike used RAW events, which may not have been delivered.
  *
- * Comportamiento de la prueba:
- *   - Mantené apretado un botón -> aparece el cursor achicado (al 55%).
- *   - Movés con el botón apretado -> el sprite sigue al puntero.
- *   - Soltás -> vuelve el cursor real normal.
- *   - Imprime un "latido" cada segundo con cuántos eventos recibió,
- *     para diagnosticar si la detección de clicks funciona.
- *   - Ctrl-C -> restaura y sale.
+ * Test behaviour:
+ *   - Hold a button down -> the shrunken cursor appears (at 55%).
+ *   - Move with the button held -> the sprite follows the pointer.
+ *   - Release -> the normal real cursor returns.
+ *   - Prints a "heartbeat" every second with how many events it received,
+ *     to diagnose whether click detection works.
+ *   - Ctrl-C -> restores and exits.
  *
- * Compilar:
+ * Build:
  *   gcc -O2 -Wall spike2_overlay.c -o spike2_overlay \
  *       $(pkg-config --cflags --libs x11 xfixes xi xcursor xext)
  */
@@ -38,22 +38,22 @@
 #include <stdint.h>
 #include <sys/select.h>
 
-#define SHRINK 0.55   /* factor de achique para la prueba */
+#define SHRINK 0.55   /* shrink factor for the test */
 
 static volatile sig_atomic_t g_stop = 0;
 static void on_sig(int s) { (void)s; g_stop = 1; }
 
-/* Estado del overlay */
+/* Overlay state */
 static Display *dpy;
 static Window   root, win;
 static GC       gc;
 static XVisualInfo vinfo;
 static int      pressed = 0;
 static int      cursor_hidden = 0;
-static int      cur_xhot = 0, cur_yhot = 0;   /* hotspot del sprite actual */
+static int      cur_xhot = 0, cur_yhot = 0;   /* hotspot of the current sprite */
 
-/* Oculta/muestra el cursor real, con guardas para no descompensar el contador
- * interno del servidor (cada Hide necesita su Show). */
+/* Hide/show the real cursor, with guards so we don't unbalance the server's
+ * internal counter (each Hide needs its Show). */
 static void hide_real_cursor(void) {
     if (!cursor_hidden) { XFixesHideCursor(dpy, root); cursor_hidden = 1; }
 }
@@ -61,8 +61,8 @@ static void show_real_cursor(void) {
     if (cursor_hidden) { XFixesShowCursor(dpy, root); cursor_hidden = 0; }
 }
 
-/* Construye una XImage ARGB con el cursor actual escalado por 'factor'.
- * Devuelve la imagen (hay que XDestroyImage-arla) y setea *out_w/h/xhot/yhot. */
+/* Build an ARGB XImage with the current cursor scaled by 'factor'.
+ * Returns the image (must be XDestroyImage'd) and sets *out_w/h/xhot/yhot. */
 static XImage *make_scaled_image(double factor,
                                  int *out_w, int *out_h,
                                  int *out_xhot, int *out_yhot) {
@@ -81,15 +81,15 @@ static XImage *make_scaled_image(double factor,
         int syi = (int)(y / factor); if (syi >= ci->height) syi = ci->height - 1;
         for (int x = 0; x < sw; x++) {
             int sxi = (int)(x / factor); if (sxi >= ci->width) sxi = ci->width - 1;
-            /* XFixes entrega ARGB premultiplicado en los 32 bits bajos de cada long */
+            /* XFixes delivers premultiplied ARGB in the low 32 bits of each long */
             buf[y * sw + x] = (uint32_t)ci->pixels[syi * ci->width + sxi];
         }
     }
-    printf("  [capturado cursor '%s' %ux%u -> sprite %dx%d]\n",
-           ci->name ? ci->name : "(sin nombre)", ci->width, ci->height, sw, sh);
+    printf("  [captured cursor '%s' %ux%u -> sprite %dx%d]\n",
+           ci->name ? ci->name : "(unnamed)", ci->width, ci->height, sw, sh);
     XFree(ci);
 
-    /* XCreateImage toma posesión de 'buf'; XDestroyImage lo libera. */
+    /* XCreateImage takes ownership of 'buf'; XDestroyImage frees it. */
     XImage *img = XCreateImage(dpy, vinfo.visual, 32, ZPixmap, 0,
                                (char *)buf, sw, sh, 32, 0);
     if (!img) { free(buf); return NULL; }
@@ -109,7 +109,7 @@ static void show_overlay_at(int px, int py, double factor) {
     XClearWindow(dpy, win);
     XPutImage(dpy, win, gc, img, 0, 0, 0, 0, sw, sh);
     XFlush(dpy);
-    XDestroyImage(img);   /* libera img y su buffer */
+    XDestroyImage(img);   /* frees img and its buffer */
 }
 
 static void hide_overlay(void) {
@@ -122,31 +122,31 @@ int main(void) {
     setvbuf(stdout, NULL, _IOLBF, 0);
 
     dpy = XOpenDisplay(NULL);
-    if (!dpy) { fprintf(stderr, "No pude abrir el display.\n"); return 1; }
+    if (!dpy) { fprintf(stderr, "Could not open the display.\n"); return 1; }
     root = DefaultRootWindow(dpy);
     int screen = DefaultScreen(dpy);
 
     int xf_ev, xf_err;
     if (!XFixesQueryExtension(dpy, &xf_ev, &xf_err)) {
-        fprintf(stderr, "XFixes no disponible.\n"); return 1;
+        fprintf(stderr, "XFixes not available.\n"); return 1;
     }
     int shape_ev, shape_err;
     if (!XShapeQueryExtension(dpy, &shape_ev, &shape_err)) {
-        fprintf(stderr, "XShape no disponible.\n"); return 1;
+        fprintf(stderr, "XShape not available.\n"); return 1;
     }
     int xi_opcode, xi_ev, xi_err;
     if (!XQueryExtension(dpy, "XInputExtension", &xi_opcode, &xi_ev, &xi_err)) {
-        fprintf(stderr, "XInput no disponible.\n"); return 1;
+        fprintf(stderr, "XInput not available.\n"); return 1;
     }
     int ximajor = 2, ximinor = 0;
     if (XIQueryVersion(dpy, &ximajor, &ximinor) != Success) {
-        fprintf(stderr, "XInput2 no disponible.\n"); return 1;
+        fprintf(stderr, "XInput2 not available.\n"); return 1;
     }
     printf("XInput2 %d.%d / XFixes OK / XShape OK\n", ximajor, ximinor);
 
-    /* Visual ARGB de 32 bits para el overlay */
+    /* 32-bit ARGB visual for the overlay */
     if (!XMatchVisualInfo(dpy, screen, 32, TrueColor, &vinfo)) {
-        fprintf(stderr, "No hay visual ARGB de 32 bits.\n"); return 1;
+        fprintf(stderr, "No 32-bit ARGB visual.\n"); return 1;
     }
 
     XSetWindowAttributes attrs;
@@ -160,13 +160,13 @@ int main(void) {
                         CWColormap | CWBackPixel | CWBorderPixel | CWOverrideRedirect,
                         &attrs);
 
-    /* Ventana transparente al click: región de input vacía */
+    /* Click-through window: empty input region */
     XShapeCombineRectangles(dpy, win, ShapeInput, 0, 0, NULL, 0, ShapeSet, Unsorted);
 
     gc = XCreateGC(dpy, win, 0, NULL);
 
-    /* --- Selección de eventos: IGUAL que wiggle-grow (probado) ---
-     * Eventos XI2 NORMALES (no raw), deviceid = XIAllDevices, sobre root. */
+    /* --- Event selection: SAME as wiggle-grow (tested) ---
+     * NORMAL XI2 events (not raw), deviceid = XIAllDevices, on the root. */
     unsigned char mask[XIMaskLen(XI_LASTEVENT)];
     memset(mask, 0, sizeof(mask));
     XISetMask(mask, XI_ButtonPress);
@@ -175,16 +175,16 @@ int main(void) {
     XIEventMask em = { .deviceid = XIAllDevices,
                        .mask_len = sizeof(mask), .mask = mask };
     if (XISelectEvents(dpy, root, &em, 1) != Success) {
-        fprintf(stderr, "XISelectEvents fallo.\n"); return 1;
+        fprintf(stderr, "XISelectEvents failed.\n"); return 1;
     }
     XSync(dpy, False);
 
     signal(SIGINT, on_sig);
     signal(SIGTERM, on_sig);
 
-    printf("\nListo. Apreta y solta un boton del mouse sobre cualquier ventana.\n");
-    printf("Deberias ver el cursor achicado mientras manten apretado.\n");
-    printf("Ctrl-C para salir.\n\n");
+    printf("\nReady. Press and release a mouse button over any window.\n");
+    printf("You should see the shrunken cursor while holding the button.\n");
+    printf("Ctrl-C to exit.\n\n");
 
     long n_press = 0, n_release = 0, n_motion = 0;
     int fd = ConnectionNumber(dpy);
@@ -195,8 +195,8 @@ int main(void) {
         int r = select(fd + 1, &fds, NULL, NULL, &tv);
 
         if (r == 0) {
-            /* latido de diagnóstico */
-            printf("  ...vivo (press=%ld release=%ld motion=%ld)\n",
+            /* diagnostic heartbeat */
+            printf("  ...alive (press=%ld release=%ld motion=%ld)\n",
                    n_press, n_release, n_motion);
             continue;
         }
@@ -217,7 +217,7 @@ int main(void) {
                 n_press++;
                 if (!pressed) {
                     pressed = 1;
-                    printf("PRESS  boton=%d en (%d,%d)\n", de->detail, px, py);
+                    printf("PRESS  button=%d at (%d,%d)\n", de->detail, px, py);
                     show_overlay_at(px, py, SHRINK);
                 }
                 break;
@@ -225,7 +225,7 @@ int main(void) {
                 n_release++;
                 if (pressed) {
                     pressed = 0;
-                    printf("RELEASE boton=%d\n", de->detail);
+                    printf("RELEASE button=%d\n", de->detail);
                     hide_overlay();
                 }
                 break;
@@ -242,9 +242,9 @@ int main(void) {
         }
     }
 
-    printf("\nSaliendo, restaurando cursor...\n");
+    printf("\nExiting, restoring cursor...\n");
     if (pressed) hide_overlay();
-    show_real_cursor();   /* por las dudas */
+    show_real_cursor();   /* just in case */
     XFlush(dpy);
     XCloseDisplay(dpy);
     return 0;

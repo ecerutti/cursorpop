@@ -3,6 +3,10 @@
 /cursorpop
 *.deb
 
+# Compiled translations (built by `make mo`)
+/locale/
+po/*.mo
+
 # Spike binaries (source kept under spikes/ for reference)
 /spikes/spike_clickshrink
 /spikes/spike2_overlay
